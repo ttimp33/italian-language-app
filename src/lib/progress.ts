@@ -39,8 +39,11 @@ const EMPTY: Progress = {
 };
 
 function load(): Progress {
-  if (typeof localStorage === 'undefined') return EMPTY;
   try {
+    // Reading `localStorage` at all throws in a sandboxed iframe, so the access
+    // itself has to sit inside the try — this runs at module load, and an
+    // uncaught throw here would blank the page rather than degrade it.
+    if (typeof localStorage === 'undefined') return EMPTY;
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return EMPTY;
     const parsed = JSON.parse(raw) as Partial<Progress>;

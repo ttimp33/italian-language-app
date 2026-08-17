@@ -7,6 +7,7 @@
   --muted: #6b6459;
   --faint: #97907f;
   --accent: #1c6b52;
+  --on-accent: #fffdf9;
   --accent-soft: #e3f0ea;
   --accent-2: #9c3b2e;
   --accent-2-soft: #f7e6e2;
@@ -19,8 +20,11 @@
   --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
 }
 
+/* The viewer may stamp data-theme on :root, or leave it unset and let the OS
+   decide. Tokens are redefined for both paths so no color lives only behind a
+   media query. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #16151a;
     --surface: #1e1d23;
     --surface-2: #26252c;
@@ -29,6 +33,7 @@
     --muted: #a9a396;
     --faint: #7d7768;
     --accent: #6ec2a0;
+    --on-accent: #10231c;
     --accent-soft: #1c322a;
     --accent-2: #e0897a;
     --accent-2-soft: #35211e;
@@ -36,6 +41,24 @@
     --warn-soft: #322a17;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #16151a;
+  --surface: #1e1d23;
+  --surface-2: #26252c;
+  --border: #34323c;
+  --text: #ece9e3;
+  --muted: #a9a396;
+  --faint: #7d7768;
+  --accent: #6ec2a0;
+  --on-accent: #10231c;
+  --accent-soft: #1c322a;
+  --accent-2: #e0897a;
+  --accent-2-soft: #35211e;
+  --warn: #e0c070;
+  --warn-soft: #322a17;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 * {
@@ -150,13 +173,7 @@ button {
 
 .levels button[aria-pressed='true'] {
   background: var(--accent);
-  color: #fff;
-}
-
-@media (prefers-color-scheme: dark) {
-  .levels button[aria-pressed='true'] {
-    color: #10231c;
-  }
+  color: var(--on-accent);
 }
 
 .level-note {
@@ -751,13 +768,7 @@ h3 {
 .btn.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
-}
-
-@media (prefers-color-scheme: dark) {
-  .btn.primary {
-    color: #10231c;
-  }
+  color: var(--on-accent);
 }
 
 .btn.ghost {
