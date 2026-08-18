@@ -60,6 +60,24 @@ enough for it to enter the daily rotation — no other wiring. `npm test` enforc
 that safe: unique IDs, in-range answer indices, exactly one blank per cloze, every drill accepting its own
 answer, and parallel text present on every paragraph and transcript line.
 
+## Deploying to GitHub Pages
+
+`.github/workflows/deploy.yml` typechecks, tests, builds and publishes to Pages on every push to `main`
+(and on demand from the Actions tab). Two one-time steps are needed before the first deploy:
+
+1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+2. Merge this branch into `main` — the workflow only deploys from the default branch, which is also what the
+   `github-pages` environment allows by default.
+
+The site then lands at `https://<owner>.github.io/italian-language-app/`. A project site is served from a
+subpath, so the workflow passes `BASE_PATH=/<repo>/` to Vite; local dev, `vite preview` and the standalone
+build all stay at the root. If you rename the repository the path follows automatically — it is read from
+`github.event.repository.name`, not hardcoded.
+
+For a one-off preview without any of this, `npm run build:standalone` produces `dist/standalone.html`: a
+single self-contained file with everything inlined and no network requests, which you can open from
+`file://`, email, or drop on any host.
+
 ## Storage and privacy
 
 Progress, streak, statistics and saved words are kept in `localStorage` under `italiano-quotidiano/v1`.
