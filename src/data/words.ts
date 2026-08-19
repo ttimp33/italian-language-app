@@ -661,6 +661,174 @@ export const WORDS: WordEntry[] = [
     collocations: ['ottemperare agli obblighi', 'in ottemperanza a', "ottemperare all'ordine"],
     related: ["l'ottemperanza", 'adempiere', 'conformarsi'],
   },
+
+  // ─────────────────────────────── A1 ───────────────────────────────
+  {
+    id: 'a1-casa',
+    level: 'A1',
+    lemma: 'la casa',
+    pos: 'sostantivo',
+    gender: 'f',
+    ipa: '/ˈkaːza/',
+    gloss: 'house; home',
+    nuance:
+      'One word for both "house" and "home". A casa without an article means "at home" or "homewards": vado a casa, sono a casa. That article-less form is fixed and worth memorising whole.',
+    examples: [
+      { it: 'La mia casa è piccola ma bella.', en: 'My house is small but nice.' },
+      { it: 'Torno a casa alle sei.', en: 'I am going home at six.' },
+    ],
+    collocations: ['a casa', 'in casa', 'casa mia', 'fare i lavori di casa'],
+    related: ['la cucina', 'la camera'],
+  },
+  {
+    id: 'a1-pane',
+    level: 'A1',
+    lemma: 'il pane',
+    pos: 'sostantivo',
+    gender: 'm',
+    ipa: '/ˈpaːne/',
+    gloss: 'bread',
+    nuance:
+      'Masculine despite the -e ending, which gives no clue to gender — this is exactly why -e nouns must be learned with their article. Usually uncountable, as in English: del pane, "some bread".',
+    examples: [
+      { it: 'Compro il pane ogni mattina.', en: 'I buy bread every morning.' },
+      { it: 'Vorrei del pane, per favore.', en: 'I would like some bread, please.' },
+    ],
+    collocations: ['pane fresco', 'un pezzo di pane', 'pane e olio'],
+    related: ['il panino', 'la panetteria'],
+  },
+  {
+    id: 'a1-acqua',
+    level: 'A1',
+    lemma: "l'acqua",
+    pos: 'sostantivo',
+    gender: 'f',
+    ipa: '/ˈakkwa/',
+    gloss: 'water',
+    nuance:
+      'Feminine, so the article elides to l\'acqua and the plural is le acque. In a restaurant you will be asked naturale o frizzante — still or sparkling — and a choice is expected.',
+    examples: [
+      { it: 'Un bicchiere d\'acqua, per favore.', en: 'A glass of water, please.' },
+      { it: 'Acqua naturale o frizzante?', en: 'Still or sparkling water?' },
+    ],
+    collocations: ['acqua naturale', 'acqua frizzante', 'un bicchiere d\'acqua'],
+    related: ['la bottiglia', 'il bicchiere'],
+  },
+  {
+    id: 'a1-famiglia',
+    level: 'A1',
+    lemma: 'la famiglia',
+    pos: 'sostantivo',
+    gender: 'f',
+    ipa: '/faˈmiʎʎa/',
+    gloss: 'family',
+    nuance:
+      'Contains the gli sound /ʎ/, one of the three combinations with no English equivalent. Singular in Italian even when speaking of several people: la famiglia è grande, never sono.',
+    examples: [
+      { it: 'Ho una famiglia numerosa.', en: 'I have a big family.' },
+      { it: 'Domenica pranzo in famiglia.', en: 'On Sunday I have lunch with the family.' },
+    ],
+    collocations: ['in famiglia', 'famiglia numerosa', 'una famiglia unita'],
+    related: ['i genitori', 'il fratello', 'la sorella'],
+  },
+  {
+    id: 'a1-giorno',
+    level: 'A1',
+    lemma: 'il giorno',
+    pos: 'sostantivo',
+    gender: 'm',
+    ipa: '/ˈdʒorno/',
+    gloss: 'day',
+    nuance:
+      'Starts with the soft g /dʒ/, as in "gem". Italian also has la giornata for a day considered as a stretch of time — buona giornata! wishes someone a good day ahead, while buongiorno is the greeting.',
+    examples: [
+      { it: 'Che giorno è oggi?', en: 'What day is it today?' },
+      { it: 'Studio italiano tutti i giorni.', en: 'I study Italian every day.' },
+    ],
+    collocations: ['tutti i giorni', 'un giorno', 'buongiorno', 'il giorno dopo'],
+    related: ['la giornata', 'oggi', 'domani'],
+  },
+  {
+    id: 'a1-grande',
+    level: 'A1',
+    lemma: 'grande',
+    pos: 'aggettivo',
+    ipa: '/ˈgrande/',
+    gloss: 'big, large; great',
+    nuance:
+      'A two-form adjective: grande for both genders in the singular, grandi in the plural. Of people it can mean grown-up or older — mio fratello grande is my big brother.',
+    examples: [
+      { it: 'Roma è una città grande.', en: 'Rome is a big city.' },
+      { it: 'Ho due fratelli grandi.', en: 'I have two older brothers.' },
+    ],
+    collocations: ['una grande città', 'più grande', 'da grande'],
+    related: ['grandezza', 'enorme'],
+  },
+  {
+    id: 'a1-piccolo',
+    level: 'A1',
+    lemma: 'piccolo',
+    pos: 'aggettivo',
+    ipa: '/ˈpikkolo/',
+    gloss: 'small, little',
+    nuance:
+      'A four-form adjective: piccolo, piccola, piccoli, piccole. Note the double c, held longer than a single one — picolo would be a different, non-existent word.',
+    examples: [
+      { it: 'Abito in un paese piccolo.', en: 'I live in a small town.' },
+      { it: 'Le camere sono piccole.', en: 'The rooms are small.' },
+    ],
+    collocations: ['da piccolo', 'un piccolo problema', 'più piccolo'],
+    related: ['piccolissimo', 'grande'],
+  },
+  {
+    id: 'a1-bello',
+    level: 'A1',
+    lemma: 'bello',
+    pos: 'aggettivo',
+    ipa: '/ˈbɛllo/',
+    gloss: 'beautiful, nice, lovely',
+    nuance:
+      'Far broader than English "beautiful": a day, a film, a trip and a jumper can all be bello. Before a noun it behaves like the article — bel libro, bello studente, bell\'amico — but after the noun it stays regular.',
+    examples: [
+      { it: 'Che bella giornata!', en: 'What a lovely day!' },
+      { it: 'È un film molto bello.', en: 'It is a very good film.' },
+    ],
+    collocations: ['che bello!', 'una bella giornata', 'fare bella figura'],
+    related: ['bellezza', 'brutto'],
+  },
+  {
+    id: 'a1-buono',
+    level: 'A1',
+    lemma: 'buono',
+    pos: 'aggettivo',
+    ipa: '/ˈbwɔːno/',
+    gloss: 'good; tasty; kind',
+    nuance:
+      'Used for food far more than English "good" — buono is the standard word for tasty. Of a person it means kind rather than skilled; for skilled, Italians say bravo.',
+    examples: [
+      { it: 'Questa pizza è molto buona.', en: 'This pizza is very tasty.' },
+      { it: 'È una persona buona.', en: 'She is a kind person.' },
+    ],
+    collocations: ['buon giorno', 'buona sera', 'molto buono', 'buon appetito'],
+    related: ['bravo', 'cattivo'],
+    falseFriend: 'Not the word for skilled: «è buono a scuola» is odd. A good student is bravo a scuola.',
+  },
+  {
+    id: 'a1-stanco',
+    level: 'A1',
+    lemma: 'stanco',
+    pos: 'aggettivo',
+    ipa: '/ˈstaŋko/',
+    gloss: 'tired',
+    nuance:
+      'Four forms, with a spelling adjustment in the plural to keep the hard /k/: stanco, stanca, stanchi, stanche. Unlike hunger and thirst, tiredness uses essere: sono stanco, not ho stanco.',
+    examples: [
+      { it: 'Sono stanco, vado a dormire.', en: 'I am tired, I am going to bed.' },
+      { it: 'Le ragazze sono stanche.', en: 'The girls are tired.' },
+    ],
+    collocations: ['sono stanco', 'stanco morto', 'stanchi di aspettare'],
+    related: ['la stanchezza', 'riposare'],
+  },
 ];
 
 export const wordsByLevel = (level: WordEntry['level']) => WORDS.filter((w) => w.level === level);

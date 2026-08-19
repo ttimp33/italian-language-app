@@ -3,8 +3,10 @@ import type {
   ClozeExercise,
   ConvCloze,
   ConvItem,
+  GrammarLesson,
   Level,
   ListeningClip,
+  PhonicsLesson,
   Question,
   WordEntry,
 } from '../data/types';
@@ -14,6 +16,8 @@ import { CLIPS } from '../data/listening';
 import { CLOZE } from '../data/exercises';
 import { CONV_ITEMS } from '../data/conversation';
 import { CONV_CLOZE } from '../data/conversationDrills';
+import { PHONICS } from '../data/phonics';
+import { GRAMMAR } from '../data/grammar';
 
 /** Local calendar day as YYYY-MM-DD (not UTC — the learner's day is the local one). */
 export function dayKey(d: Date = new Date()): string {
@@ -68,6 +72,13 @@ export interface DailyLesson {
   convCards: ConvItem[];
   /** Dialogue gap-fills using those same registers. */
   convCloze: ConvCloze[];
+  /**
+   * Pronunciation and grammar exist only where a level needs them — a C1
+   * learner does not need the alphabet — so both are optional, and the UI
+   * shows their tabs only when the day's lesson actually has one.
+   */
+  phonics?: PhonicsLesson;
+  grammar?: GrammarLesson;
 }
 
 /**
@@ -161,6 +172,18 @@ export function buildDailyLesson(level: Level, day: string = dayKey()): DailyLes
       CONV_CLOZE.filter((c) => c.level === level),
       `${day}:${level}:convcloze`,
       3,
+    ),
+    phonics: pickFor(
+      PHONICS.filter((p) => p.level === level),
+      day,
+      level,
+      'phonics',
+    ),
+    grammar: pickFor(
+      GRAMMAR.filter((g) => g.level === level),
+      day,
+      level,
+      'grammar',
     ),
   };
 }

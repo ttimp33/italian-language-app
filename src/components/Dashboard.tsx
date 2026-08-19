@@ -1,6 +1,6 @@
 import type { DailyLesson } from '../lib/daily';
 import { LEVEL_BLURB } from '../data/types';
-import { TASKS, useProgress, type TaskId } from '../lib/progress';
+import { activeTasks, TASKS, useProgress, type TaskId } from '../lib/progress';
 
 const DATE_FMT = new Intl.DateTimeFormat('it-IT', {
   weekday: 'long',
@@ -16,8 +16,9 @@ export function Dashboard({
   onOpen: (tab: TaskId) => void;
 }) {
   const { isDone } = useProgress();
-  const doneCount = TASKS.filter((t) => isDone(t.id, lesson.day)).length;
-  const pct = Math.round((doneCount / TASKS.length) * 100);
+  const todays = activeTasks(lesson);
+  const doneCount = todays.filter((id) => isDone(id, lesson.day)).length;
+  const pct = Math.round((doneCount / todays.length) * 100);
 
   const [y, m, d] = lesson.day.split('-').map(Number);
   const dateLabel = DATE_FMT.format(new Date(y, m - 1, d));
@@ -29,6 +30,8 @@ export function Dashboard({
     vocab: `${lesson.vocabQuiz.length} domande sul lessico di oggi`,
     drills: lesson.cloze.map((c) => c.skill).join(' · '),
     conversation: `${lesson.convCards.map((c) => c.term).slice(0, 3).join(', ')}…`,
+    phonics: lesson.phonics ? `${lesson.phonics.title} — ${lesson.phonics.focus}` : '',
+    grammar: lesson.grammar ? `${lesson.grammar.title} — ${lesson.grammar.focus}` : '',
   };
 
   return (
@@ -39,7 +42,7 @@ export function Dashboard({
           <span className="pill accent">Livello {lesson.level}</span>
         </div>
         <h1>
-          {doneCount === TASKS.length
+          {doneCount === todays.length
             ? 'Giornata completata. Bravo!'
             : doneCount === 0
               ? 'La tua giornata di italiano ti aspetta'
@@ -53,11 +56,11 @@ export function Dashboard({
           <div className="progress-fill" style={{ width: `${pct}%` }} />
         </div>
         <div className="muted small">
-          {doneCount} di {TASKS.length} completate
+          {doneCount} di {todays.length} completate
         </div>
 
         <div className="today-grid">
-          {TASKS.map((task) => {
+          {TASKS.filter((t) => todays.includes(t.id)).map((task) => {
             const done = isDone(task.id, lesson.day);
             return (
               <button

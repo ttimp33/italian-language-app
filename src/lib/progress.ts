@@ -1,10 +1,26 @@
 import { useCallback, useSyncExternalStore } from 'react';
 import type { Level } from '../data/types';
+import type { DailyLesson } from './daily';
 import { dayKey } from './daily';
 
-export type TaskId = 'word' | 'article' | 'listening' | 'vocab' | 'drills' | 'conversation';
+export type TaskId =
+  | 'word'
+  | 'article'
+  | 'listening'
+  | 'vocab'
+  | 'drills'
+  | 'conversation'
+  | 'phonics'
+  | 'grammar';
 
+/**
+ * The full catalogue. Not every task exists at every level — pronunciation and
+ * grammar lessons are only written for the levels that need them — so the UI
+ * derives the day's actual list from the lesson, not from this array.
+ */
 export const TASKS: { id: TaskId; label: string; xp: number }[] = [
+  { id: 'phonics', label: 'Pronuncia', xp: 15 },
+  { id: 'grammar', label: 'Grammatica', xp: 20 },
   { id: 'word', label: 'Parola del giorno', xp: 10 },
   { id: 'article', label: 'Lettura', xp: 20 },
   { id: 'listening', label: 'Ascolto', xp: 20 },
@@ -211,6 +227,19 @@ export const actions = {
     set(() => ({ ...EMPTY, completed: {}, saved: [], convDeck: {} }));
   },
 };
+
+/**
+ * The tasks that actually exist in a given day's lesson. Levels differ — A1
+ * has pronunciation and grammar lessons and the higher levels do not — and
+ * counting a task with no content would leave the day permanently unfinished.
+ */
+export function activeTasks(lesson: DailyLesson): TaskId[] {
+  return TASKS.filter((t) => {
+    if (t.id === 'phonics') return Boolean(lesson.phonics);
+    if (t.id === 'grammar') return Boolean(lesson.grammar);
+    return true;
+  }).map((t) => t.id);
+}
 
 export function useProgress() {
   const progress = useSyncExternalStore(subscribe, snapshot, snapshot);

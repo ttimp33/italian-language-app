@@ -28,7 +28,7 @@ export function SignIn() {
   return (
     <div className="app signin-shell">
       <div className="wordmark" style={{ justifyContent: 'center', paddingTop: 40 }}>
-        Italiano Quotidiano <span>A2 → C2</span>
+        Italiano Quotidiano <span>A1 → C2</span>
       </div>
 
       <section className="card signin-card">

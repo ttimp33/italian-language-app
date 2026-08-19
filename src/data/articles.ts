@@ -1056,6 +1056,193 @@ export const ARTICLES: Article[] = [
       },
     ],
   },
+
+  // ─────────────────────────────── A1 ───────────────────────────────
+  {
+    id: 'a1-art-giornata',
+    level: 'A1',
+    title: 'La mia giornata',
+    titleEn: 'My day',
+    category: 'Vita quotidiana',
+    minutes: 2,
+    paragraphs: [
+      {
+        it: 'Mi chiamo Luca e abito a Verona. Ho ventisei anni e lavoro in un negozio.',
+        en: 'My name is Luca and I live in Verona. I am twenty-six and I work in a shop.',
+      },
+      {
+        it: 'La mattina mi sveglio alle sette. Faccio colazione con un caffè e un biscotto.',
+        en: 'In the morning I wake up at seven. I have breakfast with a coffee and a biscuit.',
+      },
+      {
+        it: 'Esco di casa alle otto e prendo l\'autobus. Il negozio apre alle nove.',
+        en: 'I leave the house at eight and take the bus. The shop opens at nine.',
+      },
+      {
+        it: 'A mezzogiorno mangio un panino con i colleghi. Il pomeriggio passa veloce.',
+        en: 'At midday I eat a sandwich with my colleagues. The afternoon goes quickly.',
+      },
+      {
+        it: 'La sera torno a casa, cucino qualcosa e guardo un film. Sono sempre stanco, ma sono contento.',
+        en: 'In the evening I go home, cook something and watch a film. I am always tired, but I am happy.',
+      },
+    ],
+    glossary: [
+      { term: 'svegliarsi', gloss: 'to wake up' },
+      { term: 'la colazione', gloss: 'breakfast' },
+      { term: 'uscire di casa', gloss: 'to leave the house' },
+      { term: 'il panino', gloss: 'sandwich, roll' },
+      { term: 'contento', gloss: 'happy, pleased' },
+    ],
+    questions: [
+      {
+        id: 'a1-gio-q1',
+        prompt: 'Dove abita Luca?',
+        options: ['A Roma', 'A Verona', 'A Milano', 'A Napoli'],
+        answer: 1,
+        explanation: '«Mi chiamo Luca e abito a Verona.»',
+      },
+      {
+        id: 'a1-gio-q2',
+        prompt: 'A che ora si sveglia?',
+        options: ['Alle sei', 'Alle sette', 'Alle otto', 'Alle nove'],
+        answer: 1,
+        explanation: '«La mattina mi sveglio alle sette.»',
+      },
+      {
+        id: 'a1-gio-q3',
+        prompt: 'Che cosa fa la sera?',
+        options: ['Lavora', 'Cucina e guarda un film', 'Prende l\'autobus', 'Fa colazione'],
+        answer: 1,
+        explanation: '«cucino qualcosa e guardo un film».',
+      },
+    ],
+  },
+  {
+    id: 'a1-art-famiglia',
+    level: 'A1',
+    title: 'La famiglia di Marco',
+    titleEn: "Marco's family",
+    category: 'Persone',
+    minutes: 2,
+    paragraphs: [
+      {
+        it: 'Marco ha una famiglia grande. Ha due fratelli e una sorella.',
+        en: 'Marco has a big family. He has two brothers and one sister.',
+      },
+      {
+        it: 'Suo padre si chiama Giuseppe e ha sessant\'anni. È alto e simpatico.',
+        en: 'His father is called Giuseppe and he is sixty. He is tall and likeable.',
+      },
+      {
+        it: 'Sua madre si chiama Anna. Lavora in un ospedale ed è molto brava.',
+        en: 'His mother is called Anna. She works in a hospital and she is very good at it.',
+      },
+      {
+        it: 'La sorella di Marco è piccola: ha solo otto anni. Le piacciono i gatti.',
+        en: "Marco's sister is little: she is only eight. She likes cats.",
+      },
+      {
+        it: 'La domenica mangiano tutti insieme a casa dei nonni. È il giorno preferito di Marco.',
+        en: "On Sunday they all eat together at their grandparents' house. It is Marco's favourite day.",
+      },
+    ],
+    glossary: [
+      { term: 'il fratello', gloss: 'brother' },
+      { term: 'la sorella', gloss: 'sister' },
+      { term: 'i nonni', gloss: 'grandparents' },
+      { term: 'preferito', gloss: 'favourite' },
+      { term: 'insieme', gloss: 'together' },
+    ],
+    questions: [
+      {
+        id: 'a1-fam-q1',
+        prompt: 'Quanti fratelli ha Marco?',
+        options: ['Uno', 'Due', 'Tre', 'Nessuno'],
+        answer: 1,
+        explanation: '«Ha due fratelli e una sorella.»',
+      },
+      {
+        id: 'a1-fam-q2',
+        prompt: 'Dove lavora la madre?',
+        options: ['In un negozio', 'In un ospedale', 'A casa', 'In una scuola'],
+        answer: 1,
+        explanation: '«Lavora in un ospedale.»',
+      },
+      {
+        id: 'a1-fam-q3',
+        prompt: 'Che cosa fanno la domenica?',
+        options: [
+          'Mangiano insieme dai nonni',
+          'Lavorano',
+          'Vanno al mare',
+          'Guardano un film',
+        ],
+        answer: 0,
+        explanation: '«La domenica mangiano tutti insieme a casa dei nonni.»',
+      },
+    ],
+  },
+  {
+    id: 'a1-art-citta',
+    level: 'A1',
+    title: 'La mia città',
+    titleEn: 'My city',
+    category: 'Luoghi',
+    minutes: 2,
+    paragraphs: [
+      {
+        it: 'Abito in una città piccola, vicino al mare. Non è grande, ma è molto bella.',
+        en: 'I live in a small city, near the sea. It is not big, but it is very beautiful.',
+      },
+      {
+        it: 'Nel centro c\'è una piazza con una chiesa antica. Ci sono anche molti bar.',
+        en: 'In the centre there is a square with an old church. There are also many bars.',
+      },
+      {
+        it: 'La mattina la piazza è tranquilla. La sera, invece, c\'è molta gente.',
+        en: 'In the morning the square is quiet. In the evening, on the other hand, there are a lot of people.',
+      },
+      {
+        it: 'Vicino a casa mia c\'è un parco. Quando fa bel tempo, porto il cane lì.',
+        en: 'Near my house there is a park. When the weather is nice, I take the dog there.',
+      },
+      {
+        it: 'Non ho la macchina, ma non mi serve: vado a piedi dappertutto.',
+        en: 'I do not have a car, but I do not need one: I go everywhere on foot.',
+      },
+    ],
+    glossary: [
+      { term: 'la piazza', gloss: 'square' },
+      { term: 'la chiesa', gloss: 'church' },
+      { term: 'tranquillo', gloss: 'quiet, calm' },
+      { term: 'la gente', gloss: 'people (singular in Italian!)' },
+      { term: 'a piedi', gloss: 'on foot' },
+    ],
+    questions: [
+      {
+        id: 'a1-cit-q1',
+        prompt: "Com'è la città?",
+        options: ['Grande e rumorosa', 'Piccola e bella', 'Lontana dal mare', 'Moderna'],
+        answer: 1,
+        explanation: '«Abito in una città piccola [...] è molto bella.»',
+      },
+      {
+        id: 'a1-cit-q2',
+        prompt: "Quando c'è molta gente in piazza?",
+        options: ['La mattina', 'La sera', 'A mezzogiorno', 'Mai'],
+        answer: 1,
+        explanation: '«La sera, invece, c\'è molta gente.»',
+      },
+      {
+        id: 'a1-cit-q3',
+        prompt: 'Perché non gli serve la macchina?',
+        options: ['Perché va a piedi dappertutto', 'Perché è troppo cara', 'Perché non sa guidare', 'Perché usa il treno'],
+        answer: 0,
+        explanation: '«non mi serve: vado a piedi dappertutto».',
+      },
+    ],
+  },
 ];
 
 export const articlesByLevel = (level: Article['level']) => ARTICLES.filter((a) => a.level === level);
