@@ -1030,3 +1030,78 @@ button.chip:hover {
   font-weight: 650;
   font-size: 14px;
 }
+
+/* ─────────────────────────── phonics + grammar ─────────────────────────── */
+
+.grapheme {
+  font-family: var(--serif);
+  font-size: 26px;
+  letter-spacing: -0.01em;
+}
+
+.pairs {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.pair {
+  border-left: 3px solid var(--accent-2);
+  background: var(--surface-2);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px;
+}
+
+.pair-terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+  font-family: var(--serif);
+  font-size: 17px;
+  margin-bottom: 3px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  margin-top: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+
+table.paradigm {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 320px;
+  font-size: 15px;
+}
+
+table.paradigm th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+  padding: 8px 12px 8px 0;
+  border-bottom: 1.5px solid var(--border);
+  white-space: nowrap;
+}
+
+table.paradigm td {
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+table.paradigm tr:last-child td {
+  border-bottom: 0;
+}
+
+table.paradigm .row-head {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+table.paradigm tbody tr:hover {
+  background: var(--surface-2);
+}

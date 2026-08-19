@@ -9,7 +9,7 @@ import {
   pickFor,
   seededShuffle,
 } from './daily';
-import { _internals, actions, CONV_MASTERY } from './progress';
+import { _internals, actions, activeTasks, CONV_MASTERY, TASKS } from './progress';
 import { LEVELS } from '../data/types';
 import { WORDS } from '../data/words';
 import { ARTICLES } from '../data/articles';
@@ -17,6 +17,8 @@ import { CLIPS } from '../data/listening';
 import { CLOZE } from '../data/exercises';
 import { CONV_ITEMS } from '../data/conversation';
 import { CONV_CLOZE } from '../data/conversationDrills';
+import { PHONICS } from '../data/phonics';
+import { GRAMMAR } from '../data/grammar';
 
 describe('daily selection', () => {
   it('is stable for the same day and level', () => {
@@ -153,12 +155,19 @@ describe('content integrity', () => {
       ...CLOZE.map((c) => c.id),
       ...CONV_ITEMS.map((c) => c.id),
       ...CONV_CLOZE.map((c) => c.id),
+      ...PHONICS.map((p) => p.id),
+      ...GRAMMAR.map((g) => g.id),
     ];
     expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('keeps every multiple-choice answer index in range', () => {
-    const questions = [...ARTICLES.flatMap((a) => a.questions), ...CLIPS.flatMap((c) => c.questions)];
+    const questions = [
+      ...ARTICLES.flatMap((a) => a.questions),
+      ...CLIPS.flatMap((c) => c.questions),
+      ...PHONICS.flatMap((p) => p.questions),
+      ...GRAMMAR.flatMap((g) => g.questions),
+    ];
     expect(questions.length).toBeGreaterThan(0);
     for (const q of questions) {
       expect(q.options.length).toBeGreaterThanOrEqual(3);
@@ -249,5 +258,95 @@ describe('flashcard grading', () => {
     actions.gradeConvCard(id, false);
     expect(_internals.read().convDeck[id]).toBe(0);
     actions.reset();
+  });
+});
+
+describe('A1 level', () => {
+  it('is the first level offered', () => {
+    expect(LEVELS[0]).toBe('A1');
+  });
+
+  it('has a full lesson of its own', () => {
+    const lesson = buildDailyLesson('A1', '2026-04-10');
+    expect(lesson.word.level).toBe('A1');
+    expect(lesson.article.level).toBe('A1');
+    expect(lesson.clip.level).toBe('A1');
+    expect(lesson.cloze).toHaveLength(4);
+    expect(lesson.convCards).toHaveLength(6);
+    // The two sections A1 exists for.
+    expect(lesson.phonics?.level).toBe('A1');
+    expect(lesson.grammar?.level).toBe('A1');
+  });
+
+  it('teaches the alphabet, the sounds and the stress rules', () => {
+    const titles = PHONICS.filter((p) => p.level === 'A1').map((p) => p.title.toLowerCase());
+    expect(titles.some((t) => t.includes('alfabeto'))).toBe(true);
+    expect(titles.some((t) => t.includes('vocali'))).toBe(true);
+    expect(titles.some((t) => t.includes('accento'))).toBe(true);
+    // c/g soft-vs-hard is the rule that unlocks Italian spelling.
+    expect(PHONICS.some((p) => p.rows.some((r) => r.grapheme.includes('chi')))).toBe(true);
+  });
+
+  it('covers the grammar points the level is built around', () => {
+    const ids = GRAMMAR.filter((g) => g.level === 'A1').map((g) => g.id).join(' ');
+    for (const topic of ['pronomi-soggetto', 'pronomi-indiretti', 'servire-piacere', 'farcela-andarsene']) {
+      expect(ids, `A1 grammar covers ${topic}`).toContain(topic);
+    }
+  });
+
+  it('gives every phonics row at least one worked example with IPA', () => {
+    for (const lesson of PHONICS) {
+      expect(lesson.rows.length, `${lesson.id} rows`).toBeGreaterThan(0);
+      for (const row of lesson.rows) {
+        expect(row.examples.length, `${lesson.id}/${row.grapheme}`).toBeGreaterThan(0);
+        expect(row.examples.every((e) => e.it.trim() && e.ipa.trim() && e.en.trim())).toBe(true);
+      }
+      expect(lesson.questions.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('gives every grammar table a caption and rows of matching width', () => {
+    for (const lesson of GRAMMAR) {
+      expect(lesson.tables.length, `${lesson.id} tables`).toBeGreaterThan(0);
+      for (const table of lesson.tables) {
+        expect(table.caption.trim(), `${lesson.id} caption`).not.toBe('');
+        expect(table.rows.length).toBeGreaterThan(0);
+        for (const row of table.rows) {
+          // A row wider or narrower than the header renders as a broken table.
+          expect(row.length, `${lesson.id} / ${table.caption}`).toBe(table.headers.length);
+        }
+      }
+      expect(lesson.examples.length).toBeGreaterThanOrEqual(2);
+      expect(lesson.questions.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+});
+
+describe('level-scoped tasks', () => {
+  it('offers pronunciation and grammar at A1', () => {
+    const tasks = activeTasks(buildDailyLesson('A1', '2026-04-10'));
+    expect(tasks).toContain('phonics');
+    expect(tasks).toContain('grammar');
+    expect(tasks).toHaveLength(TASKS.length);
+  });
+
+  it('omits them at levels with no such lessons, so the day stays completable', () => {
+    for (const level of ['B1', 'C2'] as const) {
+      const lesson = buildDailyLesson(level, '2026-04-10');
+      const tasks = activeTasks(lesson);
+      expect(tasks, `${level} phonics`).not.toContain('phonics');
+      expect(tasks, `${level} grammar`).not.toContain('grammar');
+      expect(tasks.length).toBe(TASKS.length - 2);
+    }
+  });
+
+  it('never reports a task whose content is missing', () => {
+    for (const level of LEVELS) {
+      const lesson = buildDailyLesson(level, '2026-07-07');
+      for (const id of activeTasks(lesson)) {
+        if (id === 'phonics') expect(lesson.phonics).toBeDefined();
+        if (id === 'grammar') expect(lesson.grammar).toBeDefined();
+      }
+    }
   });
 });

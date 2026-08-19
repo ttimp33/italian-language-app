@@ -439,6 +439,92 @@ export const CONV_CLOZE: ConvCloze[] = [
     explanation:
       'I distinguo are the fine distinctions that stall a decision — usually disparaging, and invariable in the plural (never i distingui).',
   },
+
+  // ─────────────────────────────── A1 ───────────────────────────────
+  {
+    id: 'cc-a1-1',
+    level: 'A1',
+    context: 'Due amici si incontrano per strada.',
+    lines: [
+      { speaker: 'Anna', it: '___ Marco! Come stai?', en: 'Hi Marco! How are you?' },
+      { speaker: 'Marco', it: 'Bene, grazie. E tu?', en: 'Fine, thanks. And you?' },
+    ],
+    answer: 'Ciao',
+    accepted: ['ciao'],
+    hints: ['Ciao', 'Scusi', 'Prego', 'Grazie'],
+    explanation:
+      'Ciao works for hello and goodbye, but only with people you address as tu. With a stranger you would say buongiorno.',
+  },
+  {
+    id: 'cc-a1-2',
+    level: 'A1',
+    context: 'Un turista ferma una signora per strada.',
+    lines: [
+      { speaker: 'Turista', it: '___, dov\'è la stazione?', en: 'Excuse me, where is the station?' },
+      { speaker: 'Signora', it: 'Sempre dritto, poi a destra.', en: 'Straight ahead, then right.' },
+    ],
+    answer: 'Scusi',
+    accepted: ['scusi', 'mi scusi'],
+    hints: ['Scusi', 'Scusa', 'Ciao', 'Prego'],
+    explanation:
+      'With a stranger the formal scusi is required. Scusa would be informal, and is the commonest register slip at A1.',
+  },
+  {
+    id: 'cc-a1-3',
+    level: 'A1',
+    context: 'Al bar, dopo aver ricevuto il caffè.',
+    lines: [
+      { speaker: 'Cliente', it: 'Grazie mille!', en: 'Thank you very much!' },
+      { speaker: 'Barista', it: '___, buona giornata.', en: 'You are welcome, have a good day.' },
+    ],
+    answer: 'Prego',
+    accepted: ['prego', 'di niente'],
+    hints: ['Prego', 'Grazie', 'Scusi', 'Ciao'],
+    explanation:
+      'Prego is the standard reply to grazie. It also means "go ahead" and, from a shop assistant, "what can I get you?".',
+  },
+  {
+    id: 'cc-a1-4',
+    level: 'A1',
+    context: 'Descrivere la propria casa a un amico.',
+    lines: [
+      { speaker: 'Luca', it: "Com'è la tua casa?", en: 'What is your house like?' },
+      { speaker: 'Sara', it: 'È piccola ___ molto bella.', en: 'It is small but very nice.' },
+    ],
+    answer: 'ma',
+    accepted: ['però', 'pero'],
+    hints: ['ma', 'e', 'perché', 'anche'],
+    explanation:
+      'Ma introduces the contrast between piccola and bella. E would simply add, losing the contrast the speaker intends.',
+  },
+  {
+    id: 'cc-a1-5',
+    level: 'A1',
+    context: 'Rifiutare un invito, spiegando il motivo.',
+    lines: [
+      { speaker: 'Giulia', it: 'Vieni al cinema stasera?', en: 'Are you coming to the cinema tonight?' },
+      { speaker: 'Paolo', it: 'No, ___ sono molto stanco.', en: 'No, because I am very tired.' },
+    ],
+    answer: 'perché',
+    accepted: ['perche'],
+    hints: ['perché', 'ma', 'e', 'anche'],
+    explanation:
+      'Perché serves as both "why" and "because" — the same word answers the question it asks. The accent marks final stress.',
+  },
+  {
+    id: 'cc-a1-6',
+    level: 'A1',
+    context: 'Al mercato: chiedere qualcosa di cui si ha bisogno.',
+    lines: [
+      { speaker: 'Cliente', it: 'Buongiorno! Mi ___ del pane.', en: 'Good morning! I need some bread.' },
+      { speaker: 'Fornaio', it: 'Certo, quanto ne vuole?', en: 'Of course, how much would you like?' },
+    ],
+    answer: 'serve',
+    accepted: ['servirebbe'],
+    hints: ['serve', 'servono', 'piace', 'ho'],
+    explanation:
+      'Del pane is singular, so servire stays singular: mi serve. With a plural thing it would be mi servono due panini.',
+  },
 ];
 
 export const convClozeByLevel = (level: ConvCloze['level']) => CONV_CLOZE.filter((c) => c.level === level);

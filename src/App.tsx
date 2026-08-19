@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LEVELS, type Level } from './data/types';
 import { buildDailyLesson, dayKey } from './lib/daily';
-import { useProgress, type TaskId } from './lib/progress';
+import { activeTasks, useProgress, type TaskId } from './lib/progress';
 import { Dashboard } from './components/Dashboard';
 import { WordCard } from './components/WordCard';
 import { ArticleReader } from './components/ArticleReader';
@@ -9,6 +9,8 @@ import { ListeningPlayer } from './components/ListeningPlayer';
 import { Drills } from './components/Drills';
 import { Quiz } from './components/Quiz';
 import { Conversation } from './components/Conversation';
+import { Phonics } from './components/Phonics';
+import { Grammar } from './components/Grammar';
 import { Review } from './components/Review';
 import { SignIn } from './components/SignIn';
 import { initSession, signOut, useSession } from './lib/auth';
@@ -21,6 +23,8 @@ type Tab = 'oggi' | TaskId | 'ripasso';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'oggi', label: 'Oggi' },
+  { id: 'phonics', label: 'Pronuncia' },
+  { id: 'grammar', label: 'Grammatica' },
   { id: 'word', label: 'Parola' },
   { id: 'article', label: 'Lettura' },
   { id: 'listening', label: 'Ascolto' },
@@ -46,16 +50,27 @@ export default function App() {
 
   if (!session) return <SignIn />;
 
+  // Pronunciation and grammar only exist at levels that have lessons written,
+  // so their tabs appear and disappear with the level.
+  const available = activeTasks(lesson);
+  const visibleTabs = TABS.filter(
+    (t) => t.id === 'oggi' || t.id === 'ripasso' || available.includes(t.id as TaskId),
+  );
+
   const changeLevel = (level: Level) => {
     setLevel(level);
     if (tab !== 'oggi' && tab !== 'ripasso') setTab('oggi');
   };
 
+  // Guard against a tab that exists in state but not at this level, which
+  // would otherwise render nothing at all.
+  const activeTab: Tab = visibleTabs.some((t) => t.id === tab) ? tab : 'oggi';
+
   return (
     <div className="app">
       <header className="masthead">
         <div className="wordmark">
-          Italiano Quotidiano <span>A2 → C2</span>
+          Italiano Quotidiano <span>A1 → C2</span>
         </div>
         <div className="stats">
           <div className="whoami">
@@ -84,13 +99,13 @@ export default function App() {
       </div>
 
       <nav className="tabs" role="tablist">
-        {TABS.map((t) => {
+        {visibleTabs.map((t) => {
           const done = t.id !== 'oggi' && t.id !== 'ripasso' && isDone(t.id as TaskId, day);
           return (
             <button
               key={t.id}
               role="tab"
-              aria-selected={tab === t.id}
+              aria-selected={activeTab === t.id}
               onClick={() => setTab(t.id)}
             >
               {t.label}
@@ -101,15 +116,15 @@ export default function App() {
       </nav>
 
       <main>
-        {tab === 'oggi' && <Dashboard lesson={lesson} onOpen={(t) => setTab(t)} />}
+        {activeTab === 'oggi' && <Dashboard lesson={lesson} onOpen={(t) => setTab(t)} />}
 
-        {tab === 'word' && <WordCard word={lesson.word} />}
+        {activeTab === 'word' && <WordCard word={lesson.word} />}
 
-        {tab === 'article' && <ArticleReader article={lesson.article} day={day} />}
+        {activeTab === 'article' && <ArticleReader article={lesson.article} day={day} />}
 
-        {tab === 'listening' && <ListeningPlayer clip={lesson.clip} day={day} />}
+        {activeTab === 'listening' && <ListeningPlayer clip={lesson.clip} day={day} />}
 
-        {tab === 'vocab' && (
+        {activeTab === 'vocab' && (
           <section className="card">
             <div className="card-head">
               <span className="eyebrow">Quiz lessico · {lesson.level}</span>
@@ -129,17 +144,21 @@ export default function App() {
           </section>
         )}
 
-        {tab === 'drills' && <Drills exercises={lesson.cloze} day={day} />}
+        {activeTab === 'drills' && <Drills exercises={lesson.cloze} day={day} />}
 
-        {tab === 'conversation' && (
+        {activeTab === 'conversation' && (
           <Conversation cards={lesson.convCards} drills={lesson.convCloze} day={day} />
         )}
 
-        {tab === 'ripasso' && <Review />}
+        {activeTab === 'phonics' && lesson.phonics && <Phonics lesson={lesson.phonics} day={day} />}
+
+        {activeTab === 'grammar' && lesson.grammar && <Grammar lesson={lesson.grammar} day={day} />}
+
+        {activeTab === 'ripasso' && <Review />}
       </main>
 
       <footer className="footer">
-        Italiano Quotidiano — pratica quotidiana dall'A2 al C2. Contenuti originali; l'audio è sintetizzato dal
+        Italiano Quotidiano — pratica quotidiana dall'A1 al C2. Contenuti originali; l'audio è sintetizzato dal
         dispositivo.
       </footer>
     </div>

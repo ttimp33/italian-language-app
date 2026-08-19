@@ -1,8 +1,9 @@
-export type Level = 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+export type Level = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 
-export const LEVELS: Level[] = ['A2', 'B1', 'B2', 'C1', 'C2'];
+export const LEVELS: Level[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
 export const LEVEL_BLURB: Record<Level, string> = {
+  A1: 'Beginner — the sounds of Italian, everyday words, and your first sentences.',
   A2: 'Elementary — everyday routines, past and future basics, concrete vocabulary.',
   B1: 'Intermediate — opinions, hypotheticals, the subjunctive enters the picture.',
   B2: 'Upper intermediate — abstract argument, register control, complex tenses.',
@@ -12,6 +13,8 @@ export const LEVEL_BLURB: Record<Level, string> = {
 
 /** Suggested TTS rate per level: lower levels get a touch slower, never sluggish. */
 export const LEVEL_RATE: Record<Level, number> = {
+  // Slow enough at A1 to hear every syllable, which is the whole point at that stage.
+  A1: 0.78,
   A2: 0.85,
   B1: 0.92,
   B2: 0.97,
@@ -156,4 +159,54 @@ export interface ClozeExercise {
   hint: string;
   translation: string;
   explanation: string;
+}
+
+/* ───────────────────── pronunciation (A1 and up) ───────────────────── */
+
+export interface PhonicsExample {
+  it: string;
+  ipa: string;
+  en: string;
+}
+
+export interface PhonicsRow {
+  /** The letter or letter combination being taught, e.g. "ci / ce" or "gn". */
+  grapheme: string;
+  ipa: string;
+  /** How to make the sound, written for an English speaker. */
+  note: string;
+  examples: PhonicsExample[];
+}
+
+export interface PhonicsLesson {
+  id: string;
+  level: Level;
+  title: string;
+  focus: string;
+  intro: string;
+  rows: PhonicsRow[];
+  /** Pairs that differ in one sound, where getting it wrong changes the word. */
+  minimalPairs?: { a: string; b: string; note: string }[];
+  tip: string;
+  questions: Question[];
+}
+
+/* ───────────────────── grammar lessons (A1 and up) ───────────────────── */
+
+export interface GrammarTable {
+  caption: string;
+  headers: string[];
+  rows: string[][];
+}
+
+export interface GrammarLesson {
+  id: string;
+  level: Level;
+  title: string;
+  focus: string;
+  explanation: string;
+  tables: GrammarTable[];
+  examples: Example[];
+  pitfall?: string;
+  questions: Question[];
 }
