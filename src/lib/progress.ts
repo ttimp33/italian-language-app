@@ -35,7 +35,20 @@ export interface Progress {
 /** Confidence at which a conversation card is treated as learned. */
 export const CONV_MASTERY = 3;
 
-const STORAGE_KEY = 'italiano-quotidiano/v1';
+/**
+ * Progress is stored per profile, so two people sharing a device keep separate
+ * streaks, statistics and decks. The pre-profile key is migrated once, on the
+ * first sign-in of the account that was using the app before profiles existed.
+ */
+const KEY_PREFIX = 'italiano-quotidiano/v1';
+const LEGACY_KEY = KEY_PREFIX;
+const LEGACY_HEIR = 'tyler';
+
+let activeUser: string | null = null;
+
+function storageKey(user: string): string {
+  return `${KEY_PREFIX}/${user}`;
+}
 
 const EMPTY: Progress = {
   level: 'B1',
@@ -49,14 +62,9 @@ const EMPTY: Progress = {
   convDeck: {},
 };
 
-function load(): Progress {
+function parse(raw: string | null): Progress | null {
+  if (!raw) return null;
   try {
-    // Reading `localStorage` at all throws in a sandboxed iframe, so the access
-    // itself has to sit inside the try — this runs at module load, and an
-    // uncaught throw here would blank the page rather than degrade it.
-    if (typeof localStorage === 'undefined') return EMPTY;
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return EMPTY;
     const parsed = JSON.parse(raw) as Partial<Progress>;
     return {
       ...EMPTY,
@@ -66,20 +74,56 @@ function load(): Progress {
       convDeck: { ...EMPTY.convDeck, ...parsed.convDeck },
     };
   } catch {
+    return null;
+  }
+}
+
+function load(user: string | null): Progress {
+  if (!user) return EMPTY;
+  try {
+    // Reading `localStorage` at all throws in a sandboxed iframe, so the access
+    // itself has to sit inside the try — an uncaught throw here would blank the
+    // page rather than degrade it.
+    if (typeof localStorage === 'undefined') return EMPTY;
+    const own = parse(localStorage.getItem(storageKey(user)));
+    if (own) return own;
+
+    // One-time inheritance of pre-profile data, so the person who had been
+    // using the app does not lose their streak the day profiles arrive.
+    if (user === LEGACY_HEIR) {
+      const legacy = parse(localStorage.getItem(LEGACY_KEY));
+      if (legacy) {
+        localStorage.setItem(storageKey(user), JSON.stringify(legacy));
+        localStorage.removeItem(LEGACY_KEY);
+        return legacy;
+      }
+    }
+    return EMPTY;
+  } catch {
     return EMPTY;
   }
 }
 
-let state: Progress = load();
+let state: Progress = EMPTY;
 const listeners = new Set<() => void>();
 
 function emit() {
   for (const l of listeners) l();
 }
 
+/** Swap the whole store to another profile, or to nobody when signed out. */
+export function setActiveUser(user: string | null): void {
+  activeUser = user;
+  state = load(user);
+  emit();
+}
+
 function persist() {
+  // Nothing to write while signed out — and nothing should be written, or the
+  // next person to sign in would inherit whatever happened on the gate.
+  if (!activeUser) return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(storageKey(activeUser), JSON.stringify(state));
   } catch {
     // Storage unavailable (private mode, quota). The session still works in memory.
   }
@@ -178,4 +222,4 @@ export function useProgress() {
 }
 
 /** Exported for tests. */
-export const _internals = { daysBetween, bumpStreak, EMPTY, read: snapshot };
+export const _internals = { daysBetween, bumpStreak, EMPTY, read: snapshot, storageKey, LEGACY_KEY };
