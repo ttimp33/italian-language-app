@@ -8,6 +8,7 @@ import { ArticleReader } from './components/ArticleReader';
 import { ListeningPlayer } from './components/ListeningPlayer';
 import { Drills } from './components/Drills';
 import { Quiz } from './components/Quiz';
+import { Conversation } from './components/Conversation';
 import { Review } from './components/Review';
 
 type Tab = 'oggi' | TaskId | 'ripasso';
@@ -19,6 +20,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'listening', label: 'Ascolto' },
   { id: 'vocab', label: 'Lessico' },
   { id: 'drills', label: 'Coniugazioni' },
+  { id: 'conversation', label: 'Conversazione' },
   { id: 'ripasso', label: 'Ripasso' },
 ];
 
@@ -113,6 +115,10 @@ export default function App() {
         )}
 
         {tab === 'drills' && <Drills exercises={lesson.cloze} day={day} />}
+
+        {tab === 'conversation' && (
+          <Conversation cards={lesson.convCards} drills={lesson.convCloze} day={day} />
+        )}
 
         {tab === 'ripasso' && <Review />}
       </main>

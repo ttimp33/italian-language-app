@@ -875,3 +875,111 @@ h3 {
     font-size: 25px;
   }
 }
+
+/* ─────────────────────────── conversation ─────────────────────────── */
+
+.flashcard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 210px;
+  margin-top: 14px;
+  padding: 26px 20px;
+  text-align: center;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.flashcard:hover {
+  border-color: var(--accent);
+}
+
+.flashcard.flipped {
+  align-items: flex-start;
+  text-align: left;
+  background: var(--surface);
+}
+
+.flash-term {
+  font-family: var(--serif);
+  font-size: 38px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-top: 22px;
+}
+
+.flash-term-sm {
+  font-family: var(--serif);
+  font-size: 26px;
+  letter-spacing: -0.015em;
+}
+
+.flash-gloss {
+  font-size: 17px;
+  color: var(--muted);
+}
+
+.dialogue {
+  display: grid;
+  gap: 4px;
+  margin: 14px 0 4px;
+}
+
+.turn {
+  display: grid;
+  grid-template-columns: minmax(64px, auto) 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.turn:last-child {
+  border-bottom: 0;
+}
+
+.speaker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  padding-top: 5px;
+}
+
+.turn-it {
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.turn-en {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+button.chip {
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+
+button.chip:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+@media (max-width: 620px) {
+  .flash-term {
+    font-size: 30px;
+  }
+  .turn {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .speaker {
+    padding-top: 0;
+  }
+}

@@ -2,7 +2,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 import type { Level } from '../data/types';
 import { dayKey } from './daily';
 
-export type TaskId = 'word' | 'article' | 'listening' | 'vocab' | 'drills';
+export type TaskId = 'word' | 'article' | 'listening' | 'vocab' | 'drills' | 'conversation';
 
 export const TASKS: { id: TaskId; label: string; xp: number }[] = [
   { id: 'word', label: 'Parola del giorno', xp: 10 },
@@ -10,6 +10,7 @@ export const TASKS: { id: TaskId; label: string; xp: number }[] = [
   { id: 'listening', label: 'Ascolto', xp: 20 },
   { id: 'vocab', label: 'Quiz lessico', xp: 15 },
   { id: 'drills', label: 'Coniugazioni', xp: 15 },
+  { id: 'conversation', label: 'Conversazione', xp: 15 },
 ];
 
 export interface Progress {
@@ -23,7 +24,16 @@ export interface Progress {
   saved: string[];
   drills: { correct: number; attempted: number };
   quiz: { correct: number; attempted: number };
+  /**
+   * Confidence per conversation card: +1 each time it is recalled, back to 0
+   * when it is not. A card at 3 counts as learned, so the deck can report real
+   * progress rather than how many times it has been flipped.
+   */
+  convDeck: Record<string, number>;
 }
+
+/** Confidence at which a conversation card is treated as learned. */
+export const CONV_MASTERY = 3;
 
 const STORAGE_KEY = 'italiano-quotidiano/v1';
 
@@ -36,6 +46,7 @@ const EMPTY: Progress = {
   saved: [],
   drills: { correct: 0, attempted: 0 },
   quiz: { correct: 0, attempted: 0 },
+  convDeck: {},
 };
 
 function load(): Progress {
@@ -47,7 +58,13 @@ function load(): Progress {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return EMPTY;
     const parsed = JSON.parse(raw) as Partial<Progress>;
-    return { ...EMPTY, ...parsed, drills: { ...EMPTY.drills, ...parsed.drills }, quiz: { ...EMPTY.quiz, ...parsed.quiz } };
+    return {
+      ...EMPTY,
+      ...parsed,
+      drills: { ...EMPTY.drills, ...parsed.drills },
+      quiz: { ...EMPTY.quiz, ...parsed.quiz },
+      convDeck: { ...EMPTY.convDeck, ...parsed.convDeck },
+    };
   } catch {
     return EMPTY;
   }
@@ -131,6 +148,14 @@ export const actions = {
     }));
   },
 
+  /** Grade a conversation card: recalled advances it, a miss sends it back to 0. */
+  gradeConvCard(itemId: string, recalled: boolean) {
+    set((p) => ({
+      ...p,
+      convDeck: { ...p.convDeck, [itemId]: recalled ? (p.convDeck[itemId] ?? 0) + 1 : 0 },
+    }));
+  },
+
   toggleSaved(wordId: string) {
     set((p) => ({
       ...p,
@@ -139,7 +164,7 @@ export const actions = {
   },
 
   reset() {
-    set(() => ({ ...EMPTY, completed: {}, saved: [] }));
+    set(() => ({ ...EMPTY, completed: {}, saved: [], convDeck: {} }));
   },
 };
 
@@ -153,4 +178,4 @@ export function useProgress() {
 }
 
 /** Exported for tests. */
-export const _internals = { daysBetween, bumpStreak, EMPTY };
+export const _internals = { daysBetween, bumpStreak, EMPTY, read: snapshot };

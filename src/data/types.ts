@@ -86,6 +86,63 @@ export interface ListeningClip {
   questions: Question[];
 }
 
+/**
+ * Conversational vocabulary is sorted by the job a word does in live speech,
+ * which is not the same as its part of speech: `insomma` is an adverb in a
+ * dictionary and a turn-management device in a conversation.
+ */
+export type ConvCategory = 'segnale' | 'connettivo' | 'sostantivo' | 'aggettivo';
+
+export const CONV_CATEGORY_LABEL: Record<ConvCategory, string> = {
+  segnale: 'segnale discorsivo',
+  connettivo: 'connettivo',
+  sostantivo: 'sostantivo',
+  aggettivo: 'aggettivo',
+};
+
+export const CONV_CATEGORY_EN: Record<ConvCategory, string> = {
+  segnale: 'filler / discourse marker',
+  connettivo: 'transition word',
+  sostantivo: 'noun',
+  aggettivo: 'adjective',
+};
+
+export type Register = 'informale' | 'neutro' | 'formale';
+
+export interface ConvItem {
+  id: string;
+  level: Level;
+  term: string;
+  category: ConvCategory;
+  ipa?: string;
+  gloss: string;
+  /** What the word *does* in a conversation — the part a dictionary gloss misses. */
+  role: string;
+  register: Register;
+  /** Short exchanges: these words only make sense as turns, not as citations. */
+  examples: Example[];
+  pitfall?: string;
+}
+
+export interface ConvLine {
+  speaker: string;
+  it: string;
+  en: string;
+}
+
+export interface ConvCloze {
+  id: string;
+  level: Level;
+  context: string;
+  /** Exactly one line contains `___`. */
+  lines: ConvLine[];
+  answer: string;
+  accepted: string[];
+  /** Candidates revealed on request, so one drill serves recall and recognition. */
+  hints: string[];
+  explanation: string;
+}
+
 export interface ClozeExercise {
   id: string;
   level: Level;

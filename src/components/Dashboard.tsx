@@ -28,6 +28,7 @@ export function Dashboard({
     listening: `${lesson.clip.title} · ${lesson.clip.show}`,
     vocab: `${lesson.vocabQuiz.length} domande sul lessico di oggi`,
     drills: lesson.cloze.map((c) => c.skill).join(' · '),
+    conversation: `${lesson.convCards.map((c) => c.term).slice(0, 3).join(', ')}…`,
   };
 
   return (
