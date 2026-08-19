@@ -99,10 +99,41 @@ For a one-off preview without any of this, `npm run build:standalone` produces `
 single self-contained file with everything inlined and no network requests, which you can open from
 `file://`, email, or drop on any host.
 
-## Storage and privacy
+## Profiles and sign-in
 
-Progress, streak, statistics, saved words and flashcard mastery are kept in `localStorage` under `italiano-quotidiano/v1`.
-Nothing is sent anywhere; there is no backend and no analytics. **Ripasso → Azzera i progressi** clears it.
+The app ships with two profiles, **Tyler** and **Jessica**. Each keeps its own streak, XP, statistics, saved
+words and flashcard mastery, so sharing a browser no longer means sharing a streak. Data lives under
+`italiano-quotidiano/v1/<username>`, and nothing is written at all while signed out.
+
+> **This is not access control.** The site is static and has no backend, so the check runs entirely in the
+> browser: anyone who opens developer tools can bypass the gate or read another profile's data out of
+> `localStorage`. It separates profiles and keeps casual visitors out — nothing more. Do not reuse a password
+> you use anywhere else, and do not keep anything sensitive in here.
+
+Passwords are never stored in the repository. `src/data/users.ts` holds only a PBKDF2-SHA256 derivation
+(150,000 iterations, 16-byte random per-user salt), so publishing the source does not publish the passwords
+and offline guessing is slow rather than instant. A weak password still falls to a determined attacker.
+
+To change a password:
+
+```bash
+node scripts/make-credentials.mjs tyler "a new password"
+```
+
+Paste the printed `salt` and `hash` over that user's entry in `src/data/users.ts`. Adding a third person is
+the same operation with a new entry — nothing else needs wiring. The derivation in the script and in
+`src/lib/auth.ts` must stay in step; both are pinned to `PBKDF2_ITERATIONS`.
+
+Progress from before profiles existed is inherited once by the `tyler` account on first sign-in, then the old
+key is removed, so an existing streak is not lost.
+
+**Ripasso → Azzera i progressi** clears the signed-in profile only.
+
+### If you want real authentication
+
+That needs a server, which GitHub Pages cannot provide. The least-effort routes are Cloudflare Access in
+front of the site (identity at the edge, no code change), or moving the app to a host with built-in auth and
+per-user storage. Either is a larger change than this one; say the word.
 
 ## Stack
 

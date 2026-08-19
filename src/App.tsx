@@ -10,6 +10,12 @@ import { Drills } from './components/Drills';
 import { Quiz } from './components/Quiz';
 import { Conversation } from './components/Conversation';
 import { Review } from './components/Review';
+import { SignIn } from './components/SignIn';
+import { initSession, signOut, useSession } from './lib/auth';
+
+// Restore any previous session before React first renders, so a signed-in
+// visitor never sees the gate flash on the way to their dashboard.
+initSession();
 
 type Tab = 'oggi' | TaskId | 'ripasso';
 
@@ -25,6 +31,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export default function App() {
+  const session = useSession();
   const { progress, setLevel, isDone, completeTask, recordQuiz } = useProgress();
   const [tab, setTab] = useState<Tab>('oggi');
   const [day, setDay] = useState(dayKey());
@@ -36,6 +43,8 @@ export default function App() {
   }, []);
 
   const lesson = useMemo(() => buildDailyLesson(progress.level, day), [progress.level, day]);
+
+  if (!session) return <SignIn />;
 
   const changeLevel = (level: Level) => {
     setLevel(level);
@@ -49,6 +58,12 @@ export default function App() {
           Italiano Quotidiano <span>A2 → C2</span>
         </div>
         <div className="stats">
+          <div className="whoami">
+            <span className="name">{session.displayName}</span>
+            <button className="btn ghost tiny" onClick={signOut}>
+              esci
+            </button>
+          </div>
           <div className="stat">
             <b>{progress.streak}</b>
             <small>serie</small>

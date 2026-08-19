@@ -983,3 +983,50 @@ button.chip:hover {
     padding-top: 0;
   }
 }
+
+/* ─────────────────────────── sign-in ─────────────────────────── */
+
+.signin-shell {
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100dvh;
+}
+
+.signin-card {
+  margin-top: 20px;
+}
+
+.field {
+  display: block;
+  margin-top: 18px;
+}
+
+.field .eyebrow {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.chip.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.signin-note {
+  text-align: center;
+  padding: 0 6px;
+  line-height: 1.5;
+}
+
+.whoami {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.whoami .name {
+  font-weight: 650;
+  font-size: 14px;
+}
