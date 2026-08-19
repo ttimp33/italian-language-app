@@ -1,8 +1,8 @@
 # Italiano Quotidiano
 
 A daily Italian practice app for English speakers working from **A2 up to C2**. Every day it assembles one
-lesson at your level: a word with real usage notes, an article, a listening clip, a vocabulary quiz, and a set
-of conjugation drills.
+lesson at your level: a word with real usage notes, an article, a listening clip, a vocabulary quiz,
+conjugation drills, and a conversational-vocabulary deck.
 
 ```bash
 npm install
@@ -15,12 +15,13 @@ npm run build    # production bundle in dist/
 
 | Section | What you get |
 | --- | --- |
-| **Oggi** | The day's five activities, progress bar, streak and XP. |
+| **Oggi** | The day's six activities, progress bar, streak and XP. |
 | **Parola** | Headword with IPA, gloss, a usage note written for English speakers, false-friend warnings, two example sentences, collocations, and the word family. Star it to add it to your review deck. |
 | **Lettura** | A level-calibrated article with paragraph-by-paragraph translation on demand, a glossary, and three comprehension questions. |
 | **Ascolto** | A dialogue or interview written for the ear. Transcript hidden by default, per-line replay, adjustable speed, key phrases, and comprehension questions. |
 | **Lessico** | Three auto-generated questions on the day's word: use in context, meaning, collocation. |
 | **Coniugazioni** | Four fill-in-the-blank drills targeting the grammar your level is supposed to be consolidating, each with a full explanation. |
+| **Conversazione** | The words that hold spoken Italian together — fillers, connectives, conversational nouns and adjectives — as a flashcard deck and as gap-fills set inside real dialogues. |
 | **Ripasso** | Accuracy statistics, a two-week activity heatmap, and your saved-word deck. |
 
 ## How the daily lesson is chosen
@@ -55,10 +56,30 @@ meant to be consolidating:
 - **C1** — third-type hypotheticals, absolute participles, compound gerunds, combined pronouns
 - **C2** — passato remoto, optative subjunctive, formal impersonal syntax, reported speech
 
-Banks live in `src/data/` (`words.ts`, `articles.ts`, `listening.ts`, `exercises.ts`). Adding an entry is
-enough for it to enter the daily rotation — no other wiring. `npm test` enforces the invariants that make
+### Conversational vocabulary
+
+Textbooks teach content words and skip the connective tissue, which is why a learner with solid grammar can
+still sound like a written document read aloud. `Conversazione` covers that layer: 50 items across the five
+levels, sorted by the job a word does in a turn rather than by part of speech — `segnale discorsivo`
+(allora, insomma, mah, figurati), `connettivo` (anzi, del resto, peraltro, per contro), plus the nouns and
+adjectives that carry conversation (`la fregatura`, `il distinguo`, `pesante`, `calzante`). Each card gives
+the **function** — what the word does to a turn — because for a discourse marker that is the whole meaning.
+
+Two study modes:
+
+- **Flashcard** — flip to reveal function, register, worked exchanges and traps. Grade yourself: a card you
+  recall advances toward mastery, one you miss goes back to zero and returns later in the same session, so a
+  deck finishes only once every card has been recalled at least once.
+- **Dialoghi** — gap-fills set inside short exchanges, because a marker has no meaning outside a turn. Type
+  the answer, or reveal four candidates to turn it into multiple choice. The translation of the gapped line
+  stays hidden until you commit, and `accepted` is deliberately generous: where a native speaker could use a
+  different marker, the drill takes it and the explanation says why the keyed answer fits best.
+
+Banks live in `src/data/` (`words.ts`, `articles.ts`, `listening.ts`, `exercises.ts`, `conversation.ts`,
+`conversationDrills.ts`). Adding an entry is enough for it to enter the daily rotation — no other wiring. `npm test` enforces the invariants that make
 that safe: unique IDs, in-range answer indices, exactly one blank per cloze, every drill accepting its own
-answer, and parallel text present on every paragraph and transcript line.
+answer, parallel text on every paragraph and transcript line, all four conversational roles present at every
+level, and every dialogue hint list containing a correct option.
 
 ## Deploying to GitHub Pages
 
@@ -80,7 +101,7 @@ single self-contained file with everything inlined and no network requests, whic
 
 ## Storage and privacy
 
-Progress, streak, statistics and saved words are kept in `localStorage` under `italiano-quotidiano/v1`.
+Progress, streak, statistics, saved words and flashcard mastery are kept in `localStorage` under `italiano-quotidiano/v1`.
 Nothing is sent anywhere; there is no backend and no analytics. **Ripasso → Azzera i progressi** clears it.
 
 ## Stack

@@ -1,8 +1,19 @@
-import type { Article, ClozeExercise, Level, ListeningClip, Question, WordEntry } from '../data/types';
+import type {
+  Article,
+  ClozeExercise,
+  ConvCloze,
+  ConvItem,
+  Level,
+  ListeningClip,
+  Question,
+  WordEntry,
+} from '../data/types';
 import { WORDS } from '../data/words';
 import { ARTICLES } from '../data/articles';
 import { CLIPS } from '../data/listening';
 import { CLOZE } from '../data/exercises';
+import { CONV_ITEMS } from '../data/conversation';
+import { CONV_CLOZE } from '../data/conversationDrills';
 
 /** Local calendar day as YYYY-MM-DD (not UTC — the learner's day is the local one). */
 export function dayKey(d: Date = new Date()): string {
@@ -53,6 +64,21 @@ export interface DailyLesson {
   clip: ListeningClip;
   cloze: ClozeExercise[];
   vocabQuiz: Question[];
+  /** Conversation cards for the flashcard deck. */
+  convCards: ConvItem[];
+  /** Dialogue gap-fills using those same registers. */
+  convCloze: ConvCloze[];
+}
+
+/**
+ * Take `count` consecutive items from a bank, wrapping around, starting at a
+ * day-seeded offset. Consecutive rather than random so a day's set never
+ * repeats an item, and the window advances predictably across days.
+ */
+function windowFrom<T>(bank: T[], seed: string, count: number): T[] {
+  if (bank.length === 0) return [];
+  const start = hash(seed) % bank.length;
+  return Array.from({ length: Math.min(count, bank.length) }, (_, i) => bank[(start + i) % bank.length]);
 }
 
 /**
@@ -117,19 +143,37 @@ export function buildDailyLesson(level: Level, day: string = dayKey()): DailyLes
   const article = pickFor(articles, day, level, 'article')!;
   const clip = pickFor(clips, day, level, 'clip')!;
 
-  // Four drills a day, rotating through the level's bank without repeats.
-  const start = hash(`${day}:${level}:cloze`) % drills.length;
-  const cloze = Array.from({ length: Math.min(4, drills.length) }, (_, i) => drills[(start + i) % drills.length]);
-
   return {
     day,
     level,
     word,
     article,
     clip,
-    cloze,
+    // Four drills a day, rotating through the level's bank without repeats.
+    cloze: windowFrom(drills, `${day}:${level}:cloze`, 4),
     vocabQuiz: buildVocabQuestions(level, day, word, words),
+    convCards: windowFrom(
+      CONV_ITEMS.filter((c) => c.level === level),
+      `${day}:${level}:convcards`,
+      6,
+    ),
+    convCloze: windowFrom(
+      CONV_CLOZE.filter((c) => c.level === level),
+      `${day}:${level}:convcloze`,
+      3,
+    ),
   };
+}
+
+/** Locate the line carrying the blank in a dialogue drill. */
+export function blankLineIndex(item: ConvCloze): number {
+  return item.lines.findIndex((l) => l.it.includes('___'));
+}
+
+export function isConvAnswerCorrect(input: string, item: ConvCloze): boolean {
+  const given = normalizeAnswer(input);
+  if (!given) return false;
+  return [item.answer, ...item.accepted].some((a) => normalizeAnswer(a) === given);
 }
 
 /**
