@@ -80,10 +80,18 @@ Two study modes:
   different marker, the drill takes it and the explanation says why the keyed answer fits best.
 
 Banks live in `src/data/` (`words.ts`, `articles.ts`, `listening.ts`, `exercises.ts`, `conversation.ts`,
-`conversationDrills.ts`). Adding an entry is enough for it to enter the daily rotation — no other wiring. `npm test` enforces the invariants that make
-that safe: unique IDs, in-range answer indices, exactly one blank per cloze, every drill accepting its own
-answer, parallel text on every paragraph and transcript line, all four conversational roles present at every
-level, and every dialogue hint list containing a correct option.
+`conversationDrills.ts`, `phonics.ts`, `grammar.ts`). Adding an entry is enough for it to enter the daily
+rotation — no other wiring.
+
+`npm test` enforces the invariants that make that safe: unique IDs, in-range answer indices, exactly one
+blank per cloze, every drill accepting its own answer, parallel text on every paragraph and transcript line,
+all four conversational roles present at every level, and every dialogue hint list containing a correct
+option.
+
+**Rotation depth is also enforced.** Articles and listening clips are six deep per level, and tests assert
+that seven consecutive days yield at least six distinct items and never the same one twice running. A
+three-item bank still changed daily but came round every third day, which in use read as "the section is not
+updating" — so the depth is a tested property, not a convention.
 
 ### A1: pronunciation and grammar
 

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { derive, verify } from './auth';
 import { USERS, findUser, PBKDF2_ITERATIONS } from '../data/users';
-import { actions, setActiveUser, _internals } from './progress';
+import { actions, completedOn, completionKey, setActiveUser, _internals } from './progress';
 
 /**
  * A localStorage stand-in, since these tests run in Node. It also lets the
@@ -148,5 +148,78 @@ describe('profile isolation', () => {
     setActiveUser('jessica');
     expect(_internals.read().xp).toBe(0);
     expect(storage.getItem(_internals.LEGACY_KEY)).not.toBeNull();
+  });
+});
+
+describe('progress is per level as well as per day', () => {
+  beforeEach(() => {
+    storage.clear();
+    setActiveUser('tyler');
+    actions.reset();
+  });
+
+  it('does not mark a task done at another level', () => {
+    actions.setLevel('A1');
+    actions.completeTask('word', '2026-05-01');
+    const done = _internals.read().completed;
+    expect(done[completionKey('2026-05-01', 'A1')]).toEqual(['word']);
+    // The bug this replaces: one tap at A1 marked A2 complete too.
+    expect(done[completionKey('2026-05-01', 'A2')]).toBeUndefined();
+  });
+
+  it('tracks the same task separately at each level', () => {
+    actions.setLevel('A1');
+    actions.completeTask('word', '2026-05-01');
+    actions.setLevel('A2');
+    actions.completeTask('word', '2026-05-01');
+    actions.completeTask('article', '2026-05-01');
+
+    const done = _internals.read().completed;
+    expect(done[completionKey('2026-05-01', 'A1')]).toEqual(['word']);
+    expect(done[completionKey('2026-05-01', 'A2')]).toEqual(['word', 'article']);
+  });
+
+  it('awards xp for the same task once per level, not once overall', () => {
+    actions.setLevel('A1');
+    actions.completeTask('word', '2026-05-01');
+    const afterFirst = _internals.read().xp;
+    // Same level, same day, same task: no second award.
+    actions.completeTask('word', '2026-05-01');
+    expect(_internals.read().xp).toBe(afterFirst);
+    // Different level is genuinely different work.
+    actions.setLevel('A2');
+    actions.completeTask('word', '2026-05-01');
+    expect(_internals.read().xp).toBeGreaterThan(afterFirst);
+  });
+
+  it('still counts a day as active whatever level the work happened at', () => {
+    actions.setLevel('A1');
+    actions.completeTask('word', '2026-05-01');
+    actions.setLevel('C2');
+    actions.completeTask('article', '2026-05-01');
+    expect(completedOn(_internals.read(), '2026-05-01')).toHaveLength(2);
+    expect(completedOn(_internals.read(), '2026-05-02')).toHaveLength(0);
+  });
+
+  it('re-files pre-level records under the level the profile was using', () => {
+    const migrated = _internals.migrateCompletion(
+      { '2026-04-01': ['word', 'article'], '2026-04-02::B2': ['drills'] },
+      'B1',
+    );
+    expect(migrated[completionKey('2026-04-01', 'B1')]).toEqual(['word', 'article']);
+    // Already-keyed records are left exactly as they are.
+    expect(migrated['2026-04-02::B2']).toEqual(['drills']);
+    expect(migrated['2026-04-01']).toBeUndefined();
+  });
+
+  it('migrates stored data on load rather than dropping it', () => {
+    storage.setItem(
+      _internals.storageKey('jessica'),
+      JSON.stringify({ level: 'A2', xp: 40, completed: { '2026-04-01': ['word'] } }),
+    );
+    setActiveUser('jessica');
+    const p = _internals.read();
+    expect(p.completed[completionKey('2026-04-01', 'A2')]).toEqual(['word']);
+    expect(p.xp).toBe(40);
   });
 });

@@ -1,6 +1,6 @@
 import { WORDS } from '../data/words';
 import { LEVEL_RATE } from '../data/types';
-import { useProgress } from '../lib/progress';
+import { completedOn, useProgress } from '../lib/progress';
 import { useItalianSpeech } from '../lib/speech';
 import { dayKey } from '../lib/daily';
 
@@ -61,7 +61,8 @@ export function Review() {
           <span className="eyebrow">Ultime due settimane</span>
           <div style={{ display: 'flex', gap: 5, marginTop: 10, flexWrap: 'wrap' }}>
             {days.map((d) => {
-              const count = (progress.completed[d] ?? []).length;
+              // Aggregated across levels: a day is active if anything was done in it.
+              const count = completedOn(progress, d).length;
               const intensity = count === 0 ? 0 : Math.min(1, count / 5);
               return (
                 <div
