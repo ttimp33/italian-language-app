@@ -97,7 +97,7 @@ export function ArticleReader({ article, day }: { article: Article; day: string 
           resetKey={`${article.id}:${day}`}
           onComplete={(correct, total) => {
             recordQuiz(correct, total);
-            completeTask('article');
+            completeTask('article', day);
           }}
         />
         {isDone('article') && (

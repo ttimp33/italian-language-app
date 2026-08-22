@@ -141,7 +141,9 @@ describe('content integrity', () => {
   it('has content at every level', () => {
     for (const level of LEVELS) {
       expect(WORDS.filter((w) => w.level === level).length).toBeGreaterThanOrEqual(8);
-      expect(ARTICLES.filter((a) => a.level === level).length).toBeGreaterThanOrEqual(3);
+      // Six deep so a reader does not meet the same article twice in a week —
+      // the shallow bank read as "the section is not updating".
+      expect(ARTICLES.filter((a) => a.level === level).length, `${level} articles`).toBeGreaterThanOrEqual(6);
       expect(CLIPS.filter((c) => c.level === level).length).toBeGreaterThanOrEqual(3);
       expect(CLOZE.filter((c) => c.level === level).length).toBeGreaterThanOrEqual(10);
     }
@@ -347,6 +349,39 @@ describe('level-scoped tasks', () => {
         if (id === 'phonics') expect(lesson.phonics).toBeDefined();
         if (id === 'grammar') expect(lesson.grammar).toBeDefined();
       }
+    }
+  });
+});
+
+describe('rotation depth', () => {
+  /** How many distinct items a slot yields over `days` consecutive days. */
+  function distinctOver(level: (typeof LEVELS)[number], days: number, pick: (l: ReturnType<typeof buildDailyLesson>) => string) {
+    const seen = new Set<string>();
+    for (let i = 0; i < days; i++) {
+      seen.add(pick(buildDailyLesson(level, dayKey(new Date(Date.UTC(2026, 0, 5 + i))))));
+    }
+    return seen.size;
+  }
+
+  it('gives a different article every day for a week', () => {
+    for (const level of LEVELS) {
+      expect(distinctOver(level, 7, (l) => l.article.id), `${level} articles in 7 days`).toBeGreaterThanOrEqual(6);
+    }
+  });
+
+  it('never repeats an article on consecutive days', () => {
+    for (const level of LEVELS) {
+      for (let i = 0; i < 14; i++) {
+        const a = buildDailyLesson(level, dayKey(new Date(Date.UTC(2026, 0, 5 + i)))).article.id;
+        const b = buildDailyLesson(level, dayKey(new Date(Date.UTC(2026, 0, 6 + i)))).article.id;
+        expect(a, `${level} day ${i}`).not.toBe(b);
+      }
+    }
+  });
+
+  it('keeps the word of the day fresh for at least a week too', () => {
+    for (const level of LEVELS) {
+      expect(distinctOver(level, 7, (l) => l.word.id), `${level} words in 7 days`).toBe(7);
     }
   });
 });

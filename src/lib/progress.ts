@@ -34,7 +34,14 @@ export interface Progress {
   xp: number;
   streak: number;
   lastActiveDay: string | null;
-  /** day → task ids completed that day */
+  /**
+   * `${day}::${level}` → task ids completed that day at that level.
+   *
+   * Keyed by level as well as day because the levels are separate courses:
+   * finishing the A1 word of the day says nothing about the A2 one, and
+   * marking both done from a single tap made a whole level look complete
+   * when it had not been started.
+   */
   completed: Record<string, TaskId[]>;
   /** starred word ids, for the review deck */
   saved: string[];
@@ -66,6 +73,18 @@ function storageKey(user: string): string {
   return `${KEY_PREFIX}/${user}`;
 }
 
+/** Completion is tracked per day *and* per level. */
+export function completionKey(day: string, level: Level): string {
+  return `${day}::${level}`;
+}
+
+/** Every task completed on a day, across all levels — for the activity heatmap. */
+export function completedOn(progress: Progress, day: string): TaskId[] {
+  return Object.entries(progress.completed)
+    .filter(([key]) => key.startsWith(`${day}::`))
+    .flatMap(([, tasks]) => tasks);
+}
+
 const EMPTY: Progress = {
   level: 'B1',
   xp: 0,
@@ -78,13 +97,29 @@ const EMPTY: Progress = {
   convDeck: {},
 };
 
+/**
+ * Completion used to be keyed by day alone. Old entries are re-filed under the
+ * level the profile was last using — the only level information those records
+ * carry — so an existing streak and heatmap survive the change.
+ */
+function migrateCompletion(completed: Record<string, TaskId[]>, level: Level): Record<string, TaskId[]> {
+  const out: Record<string, TaskId[]> = {};
+  for (const [key, tasks] of Object.entries(completed)) {
+    out[key.includes('::') ? key : completionKey(key, level)] = tasks;
+  }
+  return out;
+}
+
 function parse(raw: string | null): Progress | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Partial<Progress>;
+    const level = parsed.level ?? EMPTY.level;
     return {
       ...EMPTY,
       ...parsed,
+      level,
+      completed: migrateCompletion(parsed.completed ?? {}, level),
       drills: { ...EMPTY.drills, ...parsed.drills },
       quiz: { ...EMPTY.quiz, ...parsed.quiz },
       convDeck: { ...EMPTY.convDeck, ...parsed.convDeck },
@@ -183,16 +218,17 @@ export const actions = {
     set((p) => ({ ...p, level }));
   },
 
-  completeTask(task: TaskId, day: string = dayKey()) {
+  completeTask(task: TaskId, day: string = dayKey(), level?: Level) {
     set((p) => {
-      const today = p.completed[day] ?? [];
-      if (today.includes(task)) return p;
+      const key = completionKey(day, level ?? p.level);
+      const done = p.completed[key] ?? [];
+      if (done.includes(task)) return p;
       const xp = TASKS.find((t) => t.id === task)?.xp ?? 0;
       return {
         ...p,
         xp: p.xp + xp,
         ...bumpStreak(p, day),
-        completed: { ...p.completed, [day]: [...today, task] },
+        completed: { ...p.completed, [key]: [...done, task] },
       };
     });
   },
@@ -244,11 +280,14 @@ export function activeTasks(lesson: DailyLesson): TaskId[] {
 export function useProgress() {
   const progress = useSyncExternalStore(subscribe, snapshot, snapshot);
   const isDone = useCallback(
-    (task: TaskId, day: string = dayKey()) => (progress.completed[day] ?? []).includes(task),
+    // Defaults to the level currently in play, so no call site has to thread it
+    // through and none can accidentally read another level's state.
+    (task: TaskId, day: string = dayKey(), level: Level = progress.level) =>
+      (progress.completed[completionKey(day, level)] ?? []).includes(task),
     [progress],
   );
   return { progress, isDone, ...actions };
 }
 
 /** Exported for tests. */
-export const _internals = { daysBetween, bumpStreak, EMPTY, read: snapshot, storageKey, LEGACY_KEY };
+export const _internals = { daysBetween, bumpStreak, EMPTY, read: snapshot, storageKey, LEGACY_KEY, migrateCompletion };

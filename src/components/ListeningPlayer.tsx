@@ -145,7 +145,7 @@ export function ListeningPlayer({ clip, day }: { clip: ListeningClip; day: strin
           resetKey={`${clip.id}:${day}`}
           onComplete={(correct, total) => {
             recordQuiz(correct, total);
-            completeTask('listening');
+            completeTask('listening', day);
           }}
         />
         {isDone('listening') && (
