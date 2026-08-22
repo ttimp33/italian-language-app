@@ -144,7 +144,8 @@ describe('content integrity', () => {
       // Six deep so a reader does not meet the same article twice in a week —
       // the shallow bank read as "the section is not updating".
       expect(ARTICLES.filter((a) => a.level === level).length, `${level} articles`).toBeGreaterThanOrEqual(6);
-      expect(CLIPS.filter((c) => c.level === level).length).toBeGreaterThanOrEqual(3);
+      // Six deep, for the same reason as the articles: three repeated weekly.
+      expect(CLIPS.filter((c) => c.level === level).length, `${level} clips`).toBeGreaterThanOrEqual(6);
       expect(CLOZE.filter((c) => c.level === level).length).toBeGreaterThanOrEqual(10);
     }
   });
@@ -363,18 +364,20 @@ describe('rotation depth', () => {
     return seen.size;
   }
 
-  it('gives a different article every day for a week', () => {
+  it('gives a different article and clip every day for a week', () => {
     for (const level of LEVELS) {
       expect(distinctOver(level, 7, (l) => l.article.id), `${level} articles in 7 days`).toBeGreaterThanOrEqual(6);
+      expect(distinctOver(level, 7, (l) => l.clip.id), `${level} clips in 7 days`).toBeGreaterThanOrEqual(6);
     }
   });
 
-  it('never repeats an article on consecutive days', () => {
+  it('never repeats an article or a clip on consecutive days', () => {
     for (const level of LEVELS) {
       for (let i = 0; i < 14; i++) {
-        const a = buildDailyLesson(level, dayKey(new Date(Date.UTC(2026, 0, 5 + i)))).article.id;
-        const b = buildDailyLesson(level, dayKey(new Date(Date.UTC(2026, 0, 6 + i)))).article.id;
-        expect(a, `${level} day ${i}`).not.toBe(b);
+        const one = buildDailyLesson(level, dayKey(new Date(Date.UTC(2026, 0, 5 + i))));
+        const next = buildDailyLesson(level, dayKey(new Date(Date.UTC(2026, 0, 6 + i))));
+        expect(one.article.id, `${level} article day ${i}`).not.toBe(next.article.id);
+        expect(one.clip.id, `${level} clip day ${i}`).not.toBe(next.clip.id);
       }
     }
   });
