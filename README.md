@@ -171,6 +171,35 @@ Both sections are level-scoped: `activeTasks()` derives the day's task list from
 contains, so the tabs, the dashboard and the progress bar appear and disappear with the level, and a day is
 never left uncompletable by a task with no content behind it.
 
+## Offline
+
+**The app works with no network at all**, and installs to a phone home screen.
+
+That was mostly true already: there are no API calls, no external fonts or images, no analytics, and no
+backend. Content is bundled into the JavaScript, progress lives in `localStorage`, and the audio is your
+device's own Italian voice. The only thing missing was the ability to *load* it without a connection, which
+is what the service worker adds.
+
+- **Install it**: open the site and use *Add to Home Screen* (Safari) or *Install* (Chrome). It then opens
+  standalone, without browser chrome.
+- **First visit needs a connection.** After that, everything works offline: reading, listening, drills,
+  the vocabulary scenes, spaced repetition and sign-in — the password check is Web Crypto, which is local.
+- **Updates still arrive.** `scripts/build-sw.mjs` generates the worker after each build with two rules:
+  hashed assets under `/assets/` are immutable and served cache-first, while the HTML document is
+  **network-first with the cache as fallback**. Cache-first on the document is how a PWA pins itself to an
+  old version for ever — the browser keeps serving stale HTML and the user never sees a new release.
+- The cache name is a content hash of the build, so an unchanged redeploy does not discard a working cache,
+  and old caches are deleted on activation.
+- Registration failure is non-fatal. An app that will not start because its caching layer errored is worse
+  than one that simply needs a connection.
+
+Icons are committed PNGs under `public/icons/` — iOS will not accept an SVG for the home-screen icon.
+Regenerating them needs Playwright: `npm i -D playwright && node scripts/make-icons.mjs`. The build itself
+never depends on a browser.
+
+For a copy with no hosting at all, `npm run build:standalone` still produces `dist/standalone.html`: one
+self-contained file you can open from `file://`.
+
 ## Deploying to GitHub Pages
 
 `.github/workflows/deploy.yml` typechecks, tests, builds and publishes to Pages on every push to `main`
