@@ -1105,3 +1105,40 @@ table.paradigm .row-head {
 table.paradigm tbody tr:hover {
   background: var(--surface-2);
 }
+
+/* ─────────────────────────── lexicon scenes ─────────────────────────── */
+
+.stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.stage {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  border-radius: 99px;
+  padding: 6px 13px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.stage:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.stage.current {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.lex-lemma {
+  font-family: var(--serif);
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}

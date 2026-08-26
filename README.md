@@ -19,10 +19,11 @@ npm run build    # production bundle in dist/
 | **Oggi** | The day's activities, progress bar, streak and XP. Six at most levels, eight at A1. |
 | **Pronuncia** *(A1)* | The alphabet and the letter combinations, with playable examples, minimal pairs and a check. |
 | **Grammatica** *(A1)* | One grammar point a day with paradigm tables, worked examples, the common error, and a check. |
+| **Lessico** *(A1–A2)* | Vocabulary built inside conversations: a scene, the words it used, practice from that scene, and a "which would an Italian actually say" round. Tracks coverage of the high-frequency core. |
 | **Parola** | Headword with IPA, gloss, a usage note written for English speakers, false-friend warnings, two example sentences, collocations, and the word family. Star it to add it to your review deck. |
 | **Lettura** | A level-calibrated article with paragraph-by-paragraph translation on demand, a glossary, and three comprehension questions. |
 | **Ascolto** | A dialogue or interview written for the ear. Transcript hidden by default, per-line replay, adjustable speed, key phrases, and comprehension questions. |
-| **Lessico** | Three auto-generated questions on the day's word: use in context, meaning, collocation. |
+| **Quiz** | Three auto-generated questions on the day's word: use in context, meaning, collocation. |
 | **Coniugazioni** | Four fill-in-the-blank drills targeting the grammar your level is supposed to be consolidating, each with a full explanation. |
 | **Conversazione** | The words that hold spoken Italian together — fillers, connectives, conversational nouns and adjectives — as a flashcard deck and as gap-fills set inside real dialogues. |
 | **Ripasso** | Accuracy statistics, a two-week activity heatmap, and your saved-word deck. |
@@ -80,8 +81,8 @@ Two study modes:
   different marker, the drill takes it and the explanation says why the keyed answer fits best.
 
 Banks live in `src/data/` (`words.ts`, `articles.ts`, `listening.ts`, `exercises.ts`, `conversation.ts`,
-`conversationDrills.ts`, `phonics.ts`, `grammar.ts`). Adding an entry is enough for it to enter the daily
-rotation — no other wiring.
+`conversationDrills.ts`, `phonics.ts`, `grammar.ts`, `lexicon.ts`, `scenes.ts`). Adding an entry is enough for
+it to enter the daily rotation — no other wiring.
 
 `npm test` enforces the invariants that make that safe: unique IDs, in-range answer indices, exactly one
 blank per cloze, every drill accepting its own answer, parallel text on every paragraph and transcript line,
@@ -92,6 +93,34 @@ option.
 that seven consecutive days yield at least six distinct items and never the same one twice running. A
 three-item bank still changed daily but came round every third day, which in use read as "the section is not
 updating" — so the depth is a tested property, not a convention.
+
+### Building the core vocabulary (A1–A2)
+
+`Lessico` exists because a word list and a word are different things. The bank is aimed at the
+**vocabolario fondamentale** — the roughly two thousand words behind most everyday Italian, of which the
+first thousand does most of the work, and which maps almost exactly onto what CEFR expects at A1 and A2.
+The app tracks progress toward **1000 words** and reports coverage by semantic cluster.
+
+Two decisions do the real work:
+
+- **Every entry stores a chunk, not a definition.** Knowing `mano` means "hand" is close to useless;
+  knowing `dammi una mano` is immediately usable. Words are held in the shape they actually arrive in.
+- **Words are met inside a scene before they are ever listed.** Each scene runs in a fixed order —
+  dialogue, then the words it just used, then gap-fills taken from that same dialogue, then a
+  discrimination round. Showing the glossary first would turn it back into a deck with a dialogue attached.
+
+That last round is where "how Italians actually use it" is taught explicitly: the plausible English calque
+against what a native produces, with the reason spelled out. `Voglio un caffè` against `Un caffè, per
+favore`; `Ho mancato il treno` against `Ho perso il treno`; `Quanto tempo prende?` against `Quanto ci
+mette?`. Every option is comprehensible — only one is what gets said.
+
+Nouns are displayed with the article their **sound** requires, not their gender alone (`l'acqua`,
+`lo scontrino`, `i soldi`), since at A1 the article is part of the word and a wrong one is the commonest
+error. A test asserts no rendered article can collide with the following sound.
+
+Rows in `lexicon.ts` are tuples rather than objects on purpose: at a thousand entries the object form is
+unmaintainable, one line per word is not. Adding words is a data edit; adding a scene wires itself into the
+daily rotation.
 
 ### A1: pronunciation and grammar
 

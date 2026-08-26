@@ -32,6 +32,7 @@ export function Dashboard({
     conversation: `${lesson.convCards.map((c) => c.term).slice(0, 3).join(', ')}…`,
     phonics: lesson.phonics ? `${lesson.phonics.title} — ${lesson.phonics.focus}` : '',
     grammar: lesson.grammar ? `${lesson.grammar.title} — ${lesson.grammar.focus}` : '',
+    lexicon: lesson.scene ? `${lesson.scene.title} — ${lesson.scene.teaches.length} parole in contesto` : '',
   };
 
   return (

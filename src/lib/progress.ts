@@ -11,7 +11,8 @@ export type TaskId =
   | 'drills'
   | 'conversation'
   | 'phonics'
-  | 'grammar';
+  | 'grammar'
+  | 'lexicon';
 
 /**
  * The full catalogue. Not every task exists at every level — pronunciation and
@@ -21,6 +22,7 @@ export type TaskId =
 export const TASKS: { id: TaskId; label: string; xp: number }[] = [
   { id: 'phonics', label: 'Pronuncia', xp: 15 },
   { id: 'grammar', label: 'Grammatica', xp: 20 },
+  { id: 'lexicon', label: 'Lessico in contesto', xp: 20 },
   { id: 'word', label: 'Parola del giorno', xp: 10 },
   { id: 'article', label: 'Lettura', xp: 20 },
   { id: 'listening', label: 'Ascolto', xp: 20 },
@@ -53,6 +55,12 @@ export interface Progress {
    * progress rather than how many times it has been flipped.
    */
   convDeck: Record<string, number>;
+  /**
+   * Lexicon entry ids the learner has met in a completed scene. Coverage of the
+   * high-frequency core is the metric that actually tracks vocabulary growth —
+   * far more informative than a count of cards flipped.
+   */
+  lexMet: string[];
 }
 
 /** Confidence at which a conversation card is treated as learned. */
@@ -95,6 +103,7 @@ const EMPTY: Progress = {
   drills: { correct: 0, attempted: 0 },
   quiz: { correct: 0, attempted: 0 },
   convDeck: {},
+  lexMet: [],
 };
 
 /**
@@ -123,6 +132,7 @@ function parse(raw: string | null): Progress | null {
       drills: { ...EMPTY.drills, ...parsed.drills },
       quiz: { ...EMPTY.quiz, ...parsed.quiz },
       convDeck: { ...EMPTY.convDeck, ...parsed.convDeck },
+      lexMet: parsed.lexMet ?? [],
     };
   } catch {
     return null;
@@ -252,6 +262,16 @@ export const actions = {
     }));
   },
 
+  /** Record the words a finished scene has put in front of the learner. */
+  markLexMet(ids: string[]) {
+    set((p) => {
+      const merged = new Set(p.lexMet);
+      for (const id of ids) merged.add(id);
+      if (merged.size === p.lexMet.length) return p;
+      return { ...p, lexMet: [...merged] };
+    });
+  },
+
   toggleSaved(wordId: string) {
     set((p) => ({
       ...p,
@@ -260,7 +280,7 @@ export const actions = {
   },
 
   reset() {
-    set(() => ({ ...EMPTY, completed: {}, saved: [], convDeck: {} }));
+    set(() => ({ ...EMPTY, completed: {}, saved: [], convDeck: {}, lexMet: [] }));
   },
 };
 
@@ -273,6 +293,7 @@ export function activeTasks(lesson: DailyLesson): TaskId[] {
   return TASKS.filter((t) => {
     if (t.id === 'phonics') return Boolean(lesson.phonics);
     if (t.id === 'grammar') return Boolean(lesson.grammar);
+    if (t.id === 'lexicon') return Boolean(lesson.scene);
     return true;
   }).map((t) => t.id);
 }

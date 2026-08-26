@@ -11,6 +11,7 @@ import { Quiz } from './components/Quiz';
 import { Conversation } from './components/Conversation';
 import { Phonics } from './components/Phonics';
 import { Grammar } from './components/Grammar';
+import { LexiconScene } from './components/LexiconScene';
 import { Review } from './components/Review';
 import { SignIn } from './components/SignIn';
 import { initSession, signOut, useSession } from './lib/auth';
@@ -25,10 +26,11 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'oggi', label: 'Oggi' },
   { id: 'phonics', label: 'Pronuncia' },
   { id: 'grammar', label: 'Grammatica' },
+  { id: 'lexicon', label: 'Lessico' },
   { id: 'word', label: 'Parola' },
   { id: 'article', label: 'Lettura' },
   { id: 'listening', label: 'Ascolto' },
-  { id: 'vocab', label: 'Lessico' },
+  { id: 'vocab', label: 'Quiz' },
   { id: 'drills', label: 'Coniugazioni' },
   { id: 'conversation', label: 'Conversazione' },
   { id: 'ripasso', label: 'Ripasso' },
@@ -153,6 +155,8 @@ export default function App() {
         {activeTab === 'phonics' && lesson.phonics && <Phonics lesson={lesson.phonics} day={day} />}
 
         {activeTab === 'grammar' && lesson.grammar && <Grammar lesson={lesson.grammar} day={day} />}
+
+        {activeTab === 'lexicon' && lesson.scene && <LexiconScene scene={lesson.scene} day={day} />}
 
         {activeTab === 'ripasso' && <Review />}
       </main>

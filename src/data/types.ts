@@ -210,3 +210,96 @@ export interface GrammarLesson {
   pitfall?: string;
   questions: Question[];
 }
+
+/* ───────────────── core lexicon (A1–A2 vocabulary building) ───────────────── */
+
+/**
+ * Parts of speech for the frequency lexicon. Wider than `PartOfSpeech` because
+ * the high-frequency core is dominated by function words — the first hundred
+ * items of any Italian frequency list are mostly prepositions and pronouns.
+ */
+export type LexPos =
+  | 'verbo'
+  | 'sostantivo'
+  | 'aggettivo'
+  | 'avverbio'
+  | 'pronome'
+  | 'preposizione'
+  | 'congiunzione'
+  | 'numerale'
+  | 'espressione';
+
+/**
+ * Semantic clusters. Vocabulary is learned and retrieved by situation, not
+ * alphabetically, so the bank is grouped the way a speaker reaches for it.
+ */
+export type LexCluster =
+  | 'grammaticali'
+  | 'persone'
+  | 'famiglia'
+  | 'casa'
+  | 'cibo'
+  | 'città'
+  | 'viaggio'
+  | 'lavoro'
+  | 'scuola'
+  | 'tempo'
+  | 'corpo e salute'
+  | 'acquisti'
+  | 'sentimenti'
+  | 'quantità'
+  | 'azioni'
+  | 'qualità';
+
+export interface LexEntry {
+  id: string;
+  /** Position in the high-frequency core; 1 is the commonest. */
+  rank: number;
+  level: Level;
+  lemma: string;
+  pos: LexPos;
+  gender?: 'm' | 'f';
+  gloss: string;
+  cluster: LexCluster;
+  /**
+   * A chunk, not a definition: the shape the word actually arrives in. Learning
+   * `mano` alone is near-useless; learning `dammi una mano` is immediately usable.
+   */
+  chunk: Example;
+}
+
+/**
+ * A situation that teaches its words by using them. The dialogue comes first
+ * and the word list is derived from it, which is the opposite of a flashcard
+ * deck and the reason this exists.
+ */
+export interface Scene {
+  id: string;
+  level: Level;
+  title: string;
+  situation: string;
+  /** Lexicon ids this scene puts to work. */
+  teaches: string[];
+  lines: ConvLine[];
+  /** Pragmatics: what an Italian would actually say here, and why. */
+  notes: { point: string; detail: string }[];
+  /** Gap-fills taken from the dialogue itself, so practice stays in context. */
+  practice: {
+    id: string;
+    sentence: string;
+    answer: string;
+    accepted: string[];
+    why: string;
+  }[];
+  /**
+   * Discrimination task: the grammatical calque against what a native produces.
+   * This is where "how Italians actually use it" is taught explicitly.
+   */
+  choices: {
+    id: string;
+    prompt: string;
+    options: string[];
+    answer: number;
+    why: string;
+  }[];
+}
