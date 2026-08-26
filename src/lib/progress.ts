@@ -1,6 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react';
 import type { Level } from '../data/types';
 import type { DailyLesson } from './daily';
+import { type Grade, type SrsCard, newCard, schedule } from './srs';
 import { dayKey } from './daily';
 
 export type TaskId =
@@ -53,6 +54,18 @@ export interface Progress {
    * progress rather than how many times it has been flipped.
    */
   convDeck: Record<string, number>;
+  /**
+   * Scenes worked through, in no particular order. The vocabulary section is
+   * self-paced rather than rationed by the calendar, so this is a library of
+   * what has been done, not a daily checklist.
+   */
+  scenesDone: string[];
+  /**
+   * The spaced-repetition schedule, keyed by lexicon entry id. Coverage of the
+   * core is simply how many cards exist; retention is how many have survived
+   * out to a long interval.
+   */
+  srs: Record<string, SrsCard>;
 }
 
 /** Confidence at which a conversation card is treated as learned. */
@@ -95,7 +108,22 @@ const EMPTY: Progress = {
   drills: { correct: 0, attempted: 0 },
   quiz: { correct: 0, attempted: 0 },
   convDeck: {},
+  scenesDone: [],
+  srs: {},
 };
+
+/**
+ * The vocabulary section originally recorded a flat list of words met. Those
+ * entries become real scheduler cards, due immediately, so nothing learned
+ * before spaced repetition existed is thrown away.
+ */
+function migrateSrs(parsed: Partial<Progress> & { lexMet?: string[] }): Record<string, SrsCard> {
+  const srs = { ...(parsed.srs ?? {}) };
+  for (const id of parsed.lexMet ?? []) {
+    if (!srs[id]) srs[id] = newCard(id);
+  }
+  return srs;
+}
 
 /**
  * Completion used to be keyed by day alone. Old entries are re-filed under the
@@ -123,6 +151,8 @@ function parse(raw: string | null): Progress | null {
       drills: { ...EMPTY.drills, ...parsed.drills },
       quiz: { ...EMPTY.quiz, ...parsed.quiz },
       convDeck: { ...EMPTY.convDeck, ...parsed.convDeck },
+      scenesDone: parsed.scenesDone ?? [],
+      srs: migrateSrs(parsed),
     };
   } catch {
     return null;
@@ -252,6 +282,30 @@ export const actions = {
     }));
   },
 
+  /**
+   * Finish a scene: its words enter the schedule as new cards, due at once.
+   * Words already in the schedule keep the progress they have — replaying a
+   * scene must not reset a word you have held for three weeks.
+   */
+  completeScene(sceneId: string, wordIds: string[], today?: string) {
+    set((p) => {
+      const srs = { ...p.srs };
+      for (const id of wordIds) {
+        if (!srs[id]) srs[id] = newCard(id, today);
+      }
+      const scenesDone = p.scenesDone.includes(sceneId) ? p.scenesDone : [...p.scenesDone, sceneId];
+      return { ...p, srs, scenesDone };
+    });
+  },
+
+  /** Grade a card in a review session and reschedule it. */
+  gradeCard(id: string, grade: Grade, today?: string) {
+    set((p) => {
+      const card = p.srs[id] ?? newCard(id, today);
+      return { ...p, srs: { ...p.srs, [id]: schedule(card, grade, today) } };
+    });
+  },
+
   toggleSaved(wordId: string) {
     set((p) => ({
       ...p,
@@ -260,7 +314,7 @@ export const actions = {
   },
 
   reset() {
-    set(() => ({ ...EMPTY, completed: {}, saved: [], convDeck: {} }));
+    set(() => ({ ...EMPTY, completed: {}, saved: [], convDeck: {}, scenesDone: [], srs: {} }));
   },
 };
 

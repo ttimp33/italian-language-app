@@ -1105,3 +1105,128 @@ table.paradigm .row-head {
 table.paradigm tbody tr:hover {
   background: var(--surface-2);
 }
+
+/* ─────────────────────────── lexicon scenes ─────────────────────────── */
+
+.stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.stage {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  border-radius: 99px;
+  padding: 6px 13px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.stage:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.stage.current {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.lex-lemma {
+  font-family: var(--serif);
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+/* ─────────────────── self-paced lexicon: due, forecast, recall ─────────────────── */
+
+.due-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+
+.due-count {
+  font-family: var(--serif);
+  font-size: 32px;
+  line-height: 1.1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.forecast {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+  height: 72px;
+}
+
+.forecast-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  flex: 1;
+}
+
+.forecast-bar {
+  width: 100%;
+  max-width: 34px;
+  background: var(--accent);
+  border-radius: 5px 5px 2px 2px;
+}
+
+.forecast-label {
+  font-size: 10.5px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.recall {
+  margin: 18px 0 6px;
+  padding: 26px 20px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.recall-prompt {
+  font-family: var(--serif);
+  font-size: 24px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.recall-answer {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
+
+.grades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.grades .btn {
+  flex: 1;
+  min-width: 140px;
+  justify-content: center;
+}

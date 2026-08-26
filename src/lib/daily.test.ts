@@ -19,6 +19,8 @@ import { CONV_ITEMS } from '../data/conversation';
 import { CONV_CLOZE } from '../data/conversationDrills';
 import { PHONICS } from '../data/phonics';
 import { GRAMMAR } from '../data/grammar';
+import { LEXICON, LEXICON_TARGET, clustersFor, lexById, withArticle } from '../data/lexicon';
+import { SCENES } from '../data/scenes';
 
 describe('daily selection', () => {
   it('is stable for the same day and level', () => {
@@ -160,6 +162,8 @@ describe('content integrity', () => {
       ...CONV_CLOZE.map((c) => c.id),
       ...PHONICS.map((p) => p.id),
       ...GRAMMAR.map((g) => g.id),
+      ...LEXICON.map((e) => e.id),
+      ...SCENES.map((sc) => sc.id),
     ];
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -334,12 +338,15 @@ describe('level-scoped tasks', () => {
   });
 
   it('omits them at levels with no such lessons, so the day stays completable', () => {
+    // Asserted as a set rather than a count, so adding a level-scoped task
+    // later fails here only if it is actually offered at the wrong level.
+    const levelScoped = ['phonics', 'grammar'];
     for (const level of ['B1', 'C2'] as const) {
-      const lesson = buildDailyLesson(level, '2026-04-10');
-      const tasks = activeTasks(lesson);
-      expect(tasks, `${level} phonics`).not.toContain('phonics');
-      expect(tasks, `${level} grammar`).not.toContain('grammar');
-      expect(tasks.length).toBe(TASKS.length - 2);
+      const tasks = activeTasks(buildDailyLesson(level, '2026-04-10'));
+      for (const id of levelScoped) {
+        expect(tasks, `${level} should not offer ${id}`).not.toContain(id);
+      }
+      expect(tasks).toEqual(TASKS.map((t) => t.id).filter((id) => !levelScoped.includes(id)));
     }
   });
 
@@ -386,5 +393,156 @@ describe('rotation depth', () => {
     for (const level of LEVELS) {
       expect(distinctOver(level, 7, (l) => l.word.id), `${level} words in 7 days`).toBe(7);
     }
+  });
+});
+
+describe('core lexicon', () => {
+  it('covers A1 and A2 only — a frequency list is not what C1 needs', () => {
+    expect(LEXICON.every((e) => e.level === 'A1' || e.level === 'A2')).toBe(true);
+    expect(LEXICON.filter((e) => e.level === 'A1').length).toBeGreaterThanOrEqual(150);
+    expect(LEXICON.filter((e) => e.level === 'A2').length).toBeGreaterThanOrEqual(140);
+  });
+
+  it('never lists the same lemma twice', () => {
+    const lemmas = LEXICON.map((e) => e.lemma);
+    expect(new Set(lemmas).size, `duplicates: ${lemmas.filter((l, i) => lemmas.indexOf(l) !== i)}`).toBe(lemmas.length);
+  });
+
+  it('gives every rank exactly once, ascending across the levels', () => {
+    const ranks = LEXICON.map((e) => e.rank);
+    expect(new Set(ranks).size).toBe(ranks.length);
+    // A1 is the more frequent half, so its ranks all precede A2's.
+    const maxA1 = Math.max(...LEXICON.filter((e) => e.level === 'A1').map((e) => e.rank));
+    const minA2 = Math.min(...LEXICON.filter((e) => e.level === 'A2').map((e) => e.rank));
+    expect(maxA1).toBeLessThan(minA2);
+  });
+
+  it('gives every entry a usable chunk rather than a bare definition', () => {
+    for (const e of LEXICON) {
+      expect(e.chunk.it.trim(), `${e.id} chunk`).not.toBe('');
+      expect(e.chunk.en.trim(), `${e.id} translation`).not.toBe('');
+      // A chunk is a phrase; a single word repeated back teaches nothing new.
+      expect(e.chunk.it.trim().split(/\s+/).length, `${e.id} chunk is a phrase`).toBeGreaterThan(1);
+      expect(e.gloss.trim()).not.toBe('');
+    }
+  });
+
+  it('marks gender on nouns, since the article cannot be guessed from -e', () => {
+    for (const e of LEXICON.filter((x) => x.pos === 'sostantivo')) {
+      expect(e.gender, `${e.id} gender`).toBeDefined();
+    }
+  });
+
+  it('groups every level into clusters ordered by frequency', () => {
+    for (const level of ['A1', 'A2'] as const) {
+      const groups = clustersFor(level);
+      expect(groups.length).toBeGreaterThan(4);
+      for (const g of groups) {
+        const ranks = g.entries.map((e) => e.rank);
+        expect([...ranks].sort((a, b) => a - b)).toEqual(ranks);
+      }
+    }
+  });
+
+  it('picks each noun’s article by sound, not by gender alone', () => {
+    const article = (lemma: string) => {
+      const e = LEXICON.find((x) => x.lemma === lemma);
+      expect(e, `${lemma} missing from lexicon`).toBeDefined();
+      return withArticle(e!);
+    };
+    // Elision before a vowel, either gender.
+    expect(article('acqua')).toBe("l'acqua");
+    expect(article('euro')).toBe("l'euro");
+    expect(article('amico')).toBe("l'amico");
+    // lo before s + consonant.
+    expect(article('scontrino')).toBe('lo scontrino');
+    expect(article('stipendio')).toBe('lo stipendio');
+    // but not before s + vowel.
+    expect(article('supermercato')).toBe('il supermercato');
+    expect(article('sole')).toBe('il sole');
+    // plural-only nouns take a plural article.
+    expect(article('soldi')).toBe('i soldi');
+    // the ordinary cases still work.
+    expect(article('pane')).toBe('il pane');
+    expect(article('casa')).toBe('la casa');
+  });
+
+  it('never renders an article that collides with the following sound', () => {
+    for (const e of LEXICON.filter((x) => x.pos === 'sostantivo')) {
+      const rendered = withArticle(e);
+      // «la acqua» / «il euro» are the failures this guards against.
+      expect(rendered, `${e.id}`).not.toMatch(/^(il|la|lo) [aeiouàèéìòóù]/i);
+      expect(rendered, `${e.id}`).not.toMatch(/^il s[^aeiouàèéìòóù]/i);
+    }
+  });
+
+  it('is building toward a thousand-word core', () => {
+    expect(LEXICON_TARGET).toBe(1000);
+    expect(LEXICON.length).toBeLessThanOrEqual(LEXICON_TARGET);
+  });
+});
+
+describe('vocabulary scenes', () => {
+  it('exist for A1 and A2, and only there', () => {
+    expect(SCENES.every((s) => s.level === 'A1' || s.level === 'A2')).toBe(true);
+    for (const level of ['A1', 'A2'] as const) {
+      expect(SCENES.filter((s) => s.level === level).length, `${level} scenes`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('teaches only words that exist in the lexicon, at the scene’s own level', () => {
+    for (const scene of SCENES) {
+      expect(scene.teaches.length, `${scene.id} teaches`).toBeGreaterThanOrEqual(6);
+      for (const id of scene.teaches) {
+        const entry = lexById.get(id);
+        expect(entry, `${scene.id} references missing ${id}`).toBeDefined();
+        expect(entry!.level, `${scene.id} teaches ${id} from another level`).toBe(scene.level);
+      }
+      expect(new Set(scene.teaches).size, `${scene.id} duplicate teaches`).toBe(scene.teaches.length);
+    }
+  });
+
+  it('gives every practice item one blank and a reason', () => {
+    for (const scene of SCENES) {
+      expect(scene.practice.length).toBeGreaterThanOrEqual(3);
+      for (const p of scene.practice) {
+        expect(p.sentence.split('___').length - 1, `${p.id} blank count`).toBe(1);
+        expect(p.answer.trim()).not.toBe('');
+        expect(p.why.length, `${p.id} explanation`).toBeGreaterThan(20);
+      }
+    }
+  });
+
+  it('makes every discrimination task answerable and explained', () => {
+    for (const scene of SCENES) {
+      expect(scene.choices.length).toBeGreaterThanOrEqual(2);
+      for (const c of scene.choices) {
+        expect(c.options.length).toBeGreaterThanOrEqual(3);
+        expect(new Set(c.options).size).toBe(c.options.length);
+        expect(c.answer).toBeGreaterThanOrEqual(0);
+        expect(c.answer).toBeLessThan(c.options.length);
+        // The whole point is explaining why the calque is wrong.
+        expect(c.why.length, `${c.id} explanation`).toBeGreaterThan(30);
+      }
+    }
+  });
+
+  it('carries a real dialogue with pragmatic notes, not a word list', () => {
+    for (const scene of SCENES) {
+      expect(scene.lines.length, `${scene.id} lines`).toBeGreaterThanOrEqual(6);
+      expect(scene.lines.every((l) => l.speaker.trim() && l.it.trim() && l.en.trim())).toBe(true);
+      expect(scene.notes.length, `${scene.id} notes`).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('is deliberately absent from the daily rotation', () => {
+    // The section is self-paced: the day's lesson must not carry a scene, and
+    // no daily task may exist for it, or it would be rationed by the calendar.
+    for (const level of LEVELS) {
+      const lesson = buildDailyLesson(level, '2026-05-20');
+      expect(lesson, `${level} lesson must not carry a scene`).not.toHaveProperty('scene');
+      expect(activeTasks(lesson)).not.toContain('lexicon');
+    }
+    expect(TASKS.map((t) => t.id)).not.toContain('lexicon');
   });
 });
