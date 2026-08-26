@@ -8,7 +8,6 @@ import type {
   ListeningClip,
   PhonicsLesson,
   Question,
-  Scene,
   WordEntry,
 } from '../data/types';
 import { WORDS } from '../data/words';
@@ -19,7 +18,6 @@ import { CONV_ITEMS } from '../data/conversation';
 import { CONV_CLOZE } from '../data/conversationDrills';
 import { PHONICS } from '../data/phonics';
 import { GRAMMAR } from '../data/grammar';
-import { SCENES } from '../data/scenes';
 
 /** Local calendar day as YYYY-MM-DD (not UTC — the learner's day is the local one). */
 export function dayKey(d: Date = new Date()): string {
@@ -81,8 +79,6 @@ export interface DailyLesson {
    */
   phonics?: PhonicsLesson;
   grammar?: GrammarLesson;
-  /** Vocabulary-in-context scene; A1 and A2 only, where the core is built. */
-  scene?: Scene;
 }
 
 /**
@@ -188,12 +184,6 @@ export function buildDailyLesson(level: Level, day: string = dayKey()): DailyLes
       day,
       level,
       'grammar',
-    ),
-    scene: pickFor(
-      SCENES.filter((sc) => sc.level === level),
-      day,
-      level,
-      'scene',
     ),
   };
 }

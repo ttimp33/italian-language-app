@@ -19,7 +19,7 @@ npm run build    # production bundle in dist/
 | **Oggi** | The day's activities, progress bar, streak and XP. Six at most levels, eight at A1. |
 | **Pronuncia** *(A1)* | The alphabet and the letter combinations, with playable examples, minimal pairs and a check. |
 | **Grammatica** *(A1)* | One grammar point a day with paradigm tables, worked examples, the common error, and a check. |
-| **Lessico** *(A1–A2)* | Vocabulary built inside conversations: a scene, the words it used, practice from that scene, and a "which would an Italian actually say" round. Tracks coverage of the high-frequency core. |
+| **Lessico** *(A1–A2)* | **Self-paced.** Vocabulary built inside conversations, with spaced repetition. Work scenes in any order; the words come back on a schedule. |
 | **Parola** | Headword with IPA, gloss, a usage note written for English speakers, false-friend warnings, two example sentences, collocations, and the word family. Star it to add it to your review deck. |
 | **Lettura** | A level-calibrated article with paragraph-by-paragraph translation on demand, a glossary, and three comprehension questions. |
 | **Ascolto** | A dialogue or interview written for the ear. Transcript hidden by default, per-line replay, adjustable speed, key phrases, and comprehension questions. |
@@ -82,7 +82,7 @@ Two study modes:
 
 Banks live in `src/data/` (`words.ts`, `articles.ts`, `listening.ts`, `exercises.ts`, `conversation.ts`,
 `conversationDrills.ts`, `phonics.ts`, `grammar.ts`, `lexicon.ts`, `scenes.ts`). Adding an entry is enough for
-it to enter the daily rotation — no other wiring.
+it to enter the rotation — or, for `lexicon.ts` and `scenes.ts`, the self-paced library — with no other wiring.
 
 `npm test` enforces the invariants that make that safe: unique IDs, in-range answer indices, exactly one
 blank per cloze, every drill accepting its own answer, parallel text on every paragraph and transcript line,
@@ -101,13 +101,40 @@ updating" — so the depth is a tested property, not a convention.
 first thousand does most of the work, and which maps almost exactly onto what CEFR expects at A1 and A2.
 The app tracks progress toward **1000 words** and reports coverage by semantic cluster.
 
-Two decisions do the real work:
+**This section is deliberately not part of the daily rotation.** A vocabulary bank rationed by the calendar
+is a worse vocabulary bank: you should be able to do four scenes on a wet Sunday and none on Tuesday. Scenes
+never expire and can be replayed. What *does* run on a schedule is the words, through spaced repetition —
+which is the part that genuinely needs a calendar.
+
+Three decisions do the real work:
 
 - **Every entry stores a chunk, not a definition.** Knowing `mano` means "hand" is close to useless;
   knowing `dammi una mano` is immediately usable. Words are held in the shape they actually arrive in.
 - **Words are met inside a scene before they are ever listed.** Each scene runs in a fixed order —
   dialogue, then the words it just used, then gap-fills taken from that same dialogue, then a
   discrimination round. Showing the glossary first would turn it back into a deck with a dialogue attached.
+- **Review asks you to produce, not to recognise.** A card shows the English chunk and you say the Italian
+  before revealing it. Recognition feels easier and measures less.
+
+### Spaced repetition
+
+`src/lib/srs.ts` is a simplified SM-2: each word carries an interval in days and an ease factor that rises
+when recall is easy and falls when it is not. Deliberately **not** a Leitner box ladder — fixed boxes give
+every word the same curve, wasting reviews on words you already own and under-serving the few that keep
+slipping.
+
+Details that matter in practice:
+
+- The first two successful intervals are fixed (1 day, then 3) rather than derived from ease. Multiplying a
+  zero-length interval by an ease factor yields zero, which is the classic way a hand-rolled SM-2 traps a
+  card in a same-day loop for ever. A test asserts it cannot happen.
+- **Di nuovo** returns the card later in the same session, drops its ease and records a lapse; it does not
+  end the session for that word.
+- Sessions are capped at 20 cards, so a fortnight away produces a finishable queue rather than a wall.
+- The queue is ordered most-overdue first, then by lapse count: the words that keep slipping come first.
+- A word counts as retained once its interval passes 21 days. The library shows coverage, a
+  consolidated/learning split and a seven-day forecast.
+- Replaying a finished scene never resets a word's progress.
 
 That last round is where "how Italians actually use it" is taught explicitly: the plausible English calque
 against what a native produces, with the reason spelled out. `Voglio un caffè` against `Un caffè, per

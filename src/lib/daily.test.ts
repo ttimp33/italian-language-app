@@ -334,14 +334,13 @@ describe('level-scoped tasks', () => {
     const tasks = activeTasks(buildDailyLesson('A1', '2026-04-10'));
     expect(tasks).toContain('phonics');
     expect(tasks).toContain('grammar');
-    expect(tasks).toContain('lexicon');
     expect(tasks).toHaveLength(TASKS.length);
   });
 
   it('omits them at levels with no such lessons, so the day stays completable', () => {
     // Asserted as a set rather than a count, so adding a level-scoped task
     // later fails here only if it is actually offered at the wrong level.
-    const levelScoped = ['phonics', 'grammar', 'lexicon'];
+    const levelScoped = ['phonics', 'grammar'];
     for (const level of ['B1', 'C2'] as const) {
       const tasks = activeTasks(buildDailyLesson(level, '2026-04-10'));
       for (const id of levelScoped) {
@@ -536,17 +535,14 @@ describe('vocabulary scenes', () => {
     }
   });
 
-  it('is offered as a daily task at A1 and A2, and nowhere else', () => {
+  it('is deliberately absent from the daily rotation', () => {
+    // The section is self-paced: the day's lesson must not carry a scene, and
+    // no daily task may exist for it, or it would be rationed by the calendar.
     for (const level of LEVELS) {
       const lesson = buildDailyLesson(level, '2026-05-20');
-      const tasks = activeTasks(lesson);
-      if (level === 'A1' || level === 'A2') {
-        expect(lesson.scene?.level, `${level} scene`).toBe(level);
-        expect(tasks).toContain('lexicon');
-      } else {
-        expect(lesson.scene, `${level} should have no scene`).toBeUndefined();
-        expect(tasks).not.toContain('lexicon');
-      }
+      expect(lesson, `${level} lesson must not carry a scene`).not.toHaveProperty('scene');
+      expect(activeTasks(lesson)).not.toContain('lexicon');
     }
+    expect(TASKS.map((t) => t.id)).not.toContain('lexicon');
   });
 });

@@ -11,7 +11,8 @@ import { Quiz } from './components/Quiz';
 import { Conversation } from './components/Conversation';
 import { Phonics } from './components/Phonics';
 import { Grammar } from './components/Grammar';
-import { LexiconScene } from './components/LexiconScene';
+import { Lessico } from './components/Lessico';
+import { SCENES } from './data/scenes';
 import { Review } from './components/Review';
 import { SignIn } from './components/SignIn';
 import { initSession, signOut, useSession } from './lib/auth';
@@ -20,13 +21,13 @@ import { initSession, signOut, useSession } from './lib/auth';
 // visitor never sees the gate flash on the way to their dashboard.
 initSession();
 
-type Tab = 'oggi' | TaskId | 'ripasso';
+type Tab = 'oggi' | TaskId | 'lessico' | 'ripasso';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'oggi', label: 'Oggi' },
   { id: 'phonics', label: 'Pronuncia' },
   { id: 'grammar', label: 'Grammatica' },
-  { id: 'lexicon', label: 'Lessico' },
+  { id: 'lessico', label: 'Lessico' },
   { id: 'word', label: 'Parola' },
   { id: 'article', label: 'Lettura' },
   { id: 'listening', label: 'Ascolto' },
@@ -55,9 +56,14 @@ export default function App() {
   // Pronunciation and grammar only exist at levels that have lessons written,
   // so their tabs appear and disappear with the level.
   const available = activeTasks(lesson);
-  const visibleTabs = TABS.filter(
-    (t) => t.id === 'oggi' || t.id === 'ripasso' || available.includes(t.id as TaskId),
-  );
+  // Lessico is self-paced, so it is not a daily task; it appears wherever the
+  // level has scenes to work through.
+  const hasScenes = SCENES.some((s) => s.level === progress.level);
+  const visibleTabs = TABS.filter((t) => {
+    if (t.id === 'oggi' || t.id === 'ripasso') return true;
+    if (t.id === 'lessico') return hasScenes;
+    return available.includes(t.id as TaskId);
+  });
 
   const changeLevel = (level: Level) => {
     setLevel(level);
@@ -102,7 +108,8 @@ export default function App() {
 
       <nav className="tabs" role="tablist">
         {visibleTabs.map((t) => {
-          const done = t.id !== 'oggi' && t.id !== 'ripasso' && isDone(t.id as TaskId, day);
+          const done =
+            t.id !== 'oggi' && t.id !== 'ripasso' && t.id !== 'lessico' && isDone(t.id as TaskId, day);
           return (
             <button
               key={t.id}
@@ -156,7 +163,7 @@ export default function App() {
 
         {activeTab === 'grammar' && lesson.grammar && <Grammar lesson={lesson.grammar} day={day} />}
 
-        {activeTab === 'lexicon' && lesson.scene && <LexiconScene scene={lesson.scene} day={day} />}
+        {activeTab === 'lessico' && <Lessico level={progress.level} />}
 
         {activeTab === 'ripasso' && <Review />}
       </main>
