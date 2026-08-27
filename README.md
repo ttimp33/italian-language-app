@@ -99,7 +99,14 @@ updating" — so the depth is a tested property, not a convention.
 `Lessico` exists because a word list and a word are different things. The bank is aimed at the
 **vocabolario fondamentale** — the roughly two thousand words behind most everyday Italian, of which the
 first thousand does most of the work, and which maps almost exactly onto what CEFR expects at A1 and A2.
-The app tracks progress toward **1000 words** and reports coverage by semantic cluster.
+
+**The bank now holds 1036 entries** — 400 at A1 and 636 at A2 — so the thousand-word core is covered rather
+than aimed at. Ranks are contiguous from 1, every A1 rank precedes every A2 one, and tests enforce both.
+
+**Nothing is gated.** Words can be added to the schedule at any moment: one at a time, a whole semantic
+cluster at once, from a scene without finishing its exercises, or from the searchable word bank. Scenes are
+*one* way of meeting a word, not the only one — a dozen scenes cannot introduce a thousand words, and
+requiring them made most of the bank unreachable. Words can be removed again for anything already known.
 
 **This section is deliberately not part of the daily rotation.** A vocabulary bank rationed by the calendar
 is a worse vocabulary bank: you should be able to do four scenes on a wet Sunday and none on Tuesday. Scenes
@@ -115,6 +122,8 @@ Three decisions do the real work:
   discrimination round. Showing the glossary first would turn it back into a deck with a dialogue attached.
 - **Review asks you to produce, not to recognise.** A card shows the English chunk and you say the Italian
   before revealing it. Recognition feels easier and measures less.
+- **Adding a word never resets it.** Add it twice, or replay its scene, and a card you have held for three
+  weeks keeps its interval.
 
 ### Spaced repetition
 

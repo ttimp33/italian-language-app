@@ -283,10 +283,28 @@ export const actions = {
   },
 
   /**
-   * Finish a scene: its words enter the schedule as new cards, due at once.
-   * Words already in the schedule keep the progress they have — replaying a
-   * scene must not reset a word you have held for three weeks.
+   * Put words into the schedule. Available at any point — from a scene, from the
+   * word list, a whole cluster at a time — because gating the bank behind
+   * finishing exercises left most of a thousand words unreachable.
+   *
+   * Words already scheduled keep the progress they have: adding a word twice, or
+   * replaying a scene, must never reset something held for three weeks.
    */
+  addWords(wordIds: string[], today?: string) {
+    set((p) => {
+      const srs = { ...p.srs };
+      let added = false;
+      for (const id of wordIds) {
+        if (!srs[id]) {
+          srs[id] = newCard(id, today);
+          added = true;
+        }
+      }
+      return added ? { ...p, srs } : p;
+    });
+  },
+
+  /** Mark a scene worked through. Independent of whether its words are scheduled. */
   completeScene(sceneId: string, wordIds: string[], today?: string) {
     set((p) => {
       const srs = { ...p.srs };
@@ -295,6 +313,16 @@ export const actions = {
       }
       const scenesDone = p.scenesDone.includes(sceneId) ? p.scenesDone : [...p.scenesDone, sceneId];
       return { ...p, srs, scenesDone };
+    });
+  },
+
+  /** Drop a word from the schedule, for something already known. */
+  removeWord(wordId: string) {
+    set((p) => {
+      if (!p.srs[wordId]) return p;
+      const srs = { ...p.srs };
+      delete srs[wordId];
+      return { ...p, srs };
     });
   },
 

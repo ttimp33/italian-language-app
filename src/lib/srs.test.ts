@@ -179,6 +179,36 @@ describe('the store side of it', () => {
     expect(_internals.read().scenesDone).toEqual(['sc-a1-bar']);
   });
 
+  it('adds words without any scene being finished', () => {
+    // The gate this replaces: words only entered the schedule once every
+    // exercise in a scene had been answered, which left most of a thousand-word
+    // bank unreachable.
+    actions.addWords(['lx-a1-casa', 'lx-a1-pane'], TODAY);
+    const p = _internals.read();
+    expect(Object.keys(p.srs).sort()).toEqual(['lx-a1-casa', 'lx-a1-pane']);
+    expect(p.scenesDone).toEqual([]);
+    expect(p.srs['lx-a1-casa'].due).toBe(TODAY);
+  });
+
+  it('never resets a word that is added again', () => {
+    actions.addWords(['lx-a1-casa'], TODAY);
+    actions.gradeCard('lx-a1-casa', 'easy', TODAY);
+    const graded = _internals.read().srs['lx-a1-casa'];
+    expect(graded.interval).toBe(3);
+
+    actions.addWords(['lx-a1-casa'], TODAY);
+    expect(_internals.read().srs['lx-a1-casa']).toEqual(graded);
+  });
+
+  it('removes a word from the schedule on request', () => {
+    actions.addWords(['lx-a1-casa', 'lx-a1-pane'], TODAY);
+    actions.removeWord('lx-a1-casa');
+    expect(Object.keys(_internals.read().srs)).toEqual(['lx-a1-pane']);
+    // Removing something absent is a no-op, not a crash.
+    actions.removeWord('lx-a1-nonexistent');
+    expect(Object.keys(_internals.read().srs)).toEqual(['lx-a1-pane']);
+  });
+
   it('grades a card that has never been seen without throwing', () => {
     actions.gradeCard('lx-a1-casa', 'good', TODAY);
     expect(_internals.read().srs['lx-a1-casa'].interval).toBe(1);
