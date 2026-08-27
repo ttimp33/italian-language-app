@@ -1206,9 +1206,13 @@ export function withArticle(entry: LexEntry): string {
 }
 
 /** Clusters present at a level, each with its entries, ordered by frequency. */
-export function clustersFor(level: Level): { cluster: LexCluster; entries: LexEntry[] }[] {
+/**
+ * Groups the bank by topic. Pass a level for that level's words, or 'tutti' to
+ * browse the whole bank — a learner at A2 still needs the A1 words to hand.
+ */
+export function clustersFor(level: Level | 'tutti'): { cluster: LexCluster; entries: LexEntry[] }[] {
   const map = new Map<LexCluster, LexEntry[]>();
-  for (const entry of lexiconByLevel(level)) {
+  for (const entry of level === 'tutti' ? LEXICON : lexiconByLevel(level)) {
     const list = map.get(entry.cluster) ?? [];
     list.push(entry);
     map.set(entry.cluster, list);

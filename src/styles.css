@@ -469,6 +469,25 @@ h3 {
   color: var(--muted);
 }
 
+/* A chip that filters rather than reports: same shape, but pressable. */
+.chip-btn {
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.chip-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.chip-btn.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
 /* ─────────────────────────── reader ─────────────────────────── */
 
 .prose p {

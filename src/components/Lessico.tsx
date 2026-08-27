@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Level, Scene } from '../data/types';
-import { LEVEL_RATE } from '../data/types';
+import { LEVEL_RATE, LEVELS } from '../data/types';
 import { LEXICON, LEXICON_TARGET, clustersFor, lexById, lexiconByLevel, withArticle } from '../data/lexicon';
 import type { LexEntry } from '../data/types';
 import { SCENES } from '../data/scenes';
@@ -40,7 +40,21 @@ function Library({ level, onOpen }: { level: Level; onOpen: (v: View) => void })
   const { progress } = useProgress();
   const cards = useMemo(() => Object.values(progress.srs), [progress.srs]);
   const summary = useMemo(() => summarise(cards), [cards]);
-  const scenes = SCENES.filter((s) => s.level === level);
+
+  // The scene list is not locked to the level you are studying. A learner at A2
+  // still wants the A1 scenes for revision, and one at A1 wants to look ahead.
+  const sceneLevels = useMemo(
+    () => LEVELS.filter((l) => SCENES.some((s) => s.level === l)),
+    [],
+  );
+  const [scope, setScope] = useState<Level | 'tutte'>(level);
+  // Follow the level switcher, but only until the learner overrides it here.
+  const [pinned, setPinned] = useState(false);
+  useEffect(() => {
+    if (!pinned) setScope(level);
+  }, [level, pinned]);
+
+  const scenes = scope === 'tutte' ? SCENES : SCENES.filter((s) => s.level === scope);
   const levelWords = lexiconByLevel(level);
 
   const maxForecast = Math.max(1, ...summary.forecast.map((f) => f.count));
@@ -86,6 +100,22 @@ function Library({ level, onOpen }: { level: Level; onOpen: (v: View) => void })
             {scenes.filter((s) => progress.scenesDone.includes(s.id)).length} / {scenes.length}
           </span>
         </div>
+        <div className="chips" style={{ marginBottom: 14 }}>
+          {[...sceneLevels, 'tutte' as const].map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`chip chip-btn${scope === s ? ' on' : ''}`}
+              aria-pressed={scope === s}
+              onClick={() => {
+                setScope(s);
+                setPinned(true);
+              }}
+            >
+              {s === 'tutte' ? `tutte (${SCENES.length})` : `${s} (${SCENES.filter((x) => x.level === s).length})`}
+            </button>
+          ))}
+        </div>
         <div className="today-grid">
           {scenes.map((scene) => {
             const done = progress.scenesDone.includes(scene.id);
@@ -97,7 +127,7 @@ function Library({ level, onOpen }: { level: Level; onOpen: (v: View) => void })
                 </span>
                 <span className="task-sub">{scene.situation}</span>
                 <span className="task-meta">
-                  {scene.teaches.length} parole {done ? '· da rifare' : ''}
+                  {scene.level} · {scene.teaches.length} parole {done ? '· da rifare' : ''}
                 </span>
               </button>
             );
@@ -622,7 +652,10 @@ function WordBank({ level, onExit }: { level: Level; onExit: () => void }) {
   const speech = useItalianSpeech([], LEVEL_RATE[level]);
   const canSpeak = speech.supported && speech.hasItalianVoice;
 
-  const groups = useMemo(() => clustersFor(level), [level]);
+  // Scenes are browsable across levels, so the bank has to be too: otherwise a
+  // word met in an A1 scene would be invisible here while studying at A2.
+  const [scope, setScope] = useState<Level | 'tutti'>(level);
+  const groups = useMemo(() => clustersFor(scope), [scope]);
   const [open, setOpen] = useState<string | null>(groups[0]?.cluster ?? null);
   const [query, setQuery] = useState('');
 
@@ -638,7 +671,7 @@ function WordBank({ level, onExit }: { level: Level; onExit: () => void }) {
     <>
       <section className="card">
         <div className="card-head">
-          <span className="eyebrow">Tutte le parole · {level}</span>
+          <span className="eyebrow">Tutte le parole · {scope === 'tutti' ? 'A1 + A2' : scope}</span>
           <button className="btn ghost tiny" onClick={onExit}>
             ← indietro
           </button>
@@ -648,6 +681,22 @@ function WordBank({ level, onExit }: { level: Level; onExit: () => void }) {
           Aggiungi quello che vuoi studiare: una parola, o un'area intera. Entra subito nel ripasso e torna secondo la
           sua scadenza.
         </p>
+        <div className="chips" style={{ marginTop: 14 }}>
+          {(['A1', 'A2', 'tutti'] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`chip chip-btn${scope === s ? ' on' : ''}`}
+              aria-pressed={scope === s}
+              onClick={() => {
+                setScope(s);
+                setOpen(null);
+              }}
+            >
+              {s === 'tutti' ? `tutti (${LEXICON.length})` : `${s} (${lexiconByLevel(s).length})`}
+            </button>
+          ))}
+        </div>
         <label className="field">
           <span className="eyebrow">Cerca</span>
           <input
@@ -713,7 +762,7 @@ function WordBank({ level, onExit }: { level: Level; onExit: () => void }) {
                       <div className="example-it" style={{ marginTop: 4 }}>
                         {e.chunk.it}
                         {canSpeak && (
-                          <button className="btn ghost tiny" onClick={() => speech.speakText(e.chunk.it, LEVEL_RATE[level])}>
+                          <button className="btn ghost tiny" onClick={() => speech.speakText(e.chunk.it, LEVEL_RATE[e.level])}>
                             ▸
                           </button>
                         )}
