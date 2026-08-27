@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import type { Article } from '../data/types';
 import { LEVEL_RATE } from '../data/types';
 import { useItalianSpeech } from '../lib/speech';
-import { useProgress } from '../lib/progress';
+import { useStep } from '../lib/step';
 import { Quiz } from './Quiz';
+import { StepFooter } from './StepFooter';
 
-export function ArticleReader({ article, day }: { article: Article; day: string }) {
-  const { completeTask, isDone, recordQuiz } = useProgress();
+export function ArticleReader({ article, stepId, onNext }: { article: Article; stepId: string; onNext?: () => void }) {
+  const step = useStep(stepId, 'article');
   const [showAll, setShowAll] = useState(false);
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
   const speech = useItalianSpeech(
@@ -92,19 +93,8 @@ export function ArticleReader({ article, day }: { article: Article; day: string 
         <div className="card-head">
           <span className="eyebrow">Comprensione</span>
         </div>
-        <Quiz
-          questions={article.questions}
-          resetKey={`${article.id}:${day}`}
-          onComplete={(correct, total) => {
-            recordQuiz(correct, total);
-            completeTask('article', day);
-          }}
-        />
-        {isDone('article') && (
-          <p className="muted small" style={{ marginTop: 12 }}>
-            ✓ Lettura di oggi completata.
-          </p>
-        )}
+        <Quiz questions={article.questions} resetKey={stepId} onComplete={step.report} />
+        <StepFooter done={step.done} best={step.best} attempts={step.attempts} onNext={onNext} />
       </section>
     </>
   );

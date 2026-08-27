@@ -303,3 +303,40 @@ export interface Scene {
     why: string;
   }[];
 }
+
+/* ─────────────────────────── the course path ─────────────────────────── */
+
+/**
+ * What a single step of a unit asks you to do. Each kind resolves to one of the
+ * content banks by id — the curriculum holds references, never copies, so a
+ * lesson exists in exactly one place.
+ */
+export type StepKind =
+  | 'phonics'
+  | 'grammar'
+  | 'word'
+  | 'article'
+  | 'listening'
+  | 'drills'
+  | 'conversation'
+  | 'convdrill';
+
+export interface Step {
+  id: string;
+  kind: StepKind;
+  /** Ids into the bank for this kind: one for a lesson, several for a drill set. */
+  refs: string[];
+}
+
+/**
+ * A topic. Units are ordered inside a level and a level is ordered inside the
+ * course: this is a path, not a menu. The goal is a CEFR can-do statement —
+ * what you are able to do once the unit is behind you.
+ */
+export interface Unit {
+  id: string;
+  level: Level;
+  title: string;
+  goal: string;
+  steps: Step[];
+}

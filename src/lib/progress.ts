@@ -1,49 +1,43 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import type { Level } from '../data/types';
-import type { DailyLesson } from './daily';
+import type { StepKind } from '../data/types';
 import { type Grade, type SrsCard, newCard, schedule } from './srs';
 import { dayKey } from './daily';
 
-export type TaskId =
-  | 'word'
-  | 'article'
-  | 'listening'
-  | 'vocab'
-  | 'drills'
-  | 'conversation'
-  | 'phonics'
-  | 'grammar';
+/** What each kind of step is worth, and what to call it. */
+export const STEP_META: Record<StepKind, { label: string; xp: number }> = {
+  phonics: { label: 'Pronuncia', xp: 15 },
+  grammar: { label: 'Grammatica', xp: 20 },
+  word: { label: 'Parola', xp: 10 },
+  article: { label: 'Lettura', xp: 20 },
+  listening: { label: 'Ascolto', xp: 20 },
+  drills: { label: 'Esercizi', xp: 15 },
+  conversation: { label: 'Conversazione', xp: 15 },
+  convdrill: { label: 'Dialoghi', xp: 15 },
+};
 
 /**
- * The full catalogue. Not every task exists at every level — pronunciation and
- * grammar lessons are only written for the levels that need them — so the UI
- * derives the day's actual list from the lesson, not from this array.
+ * What the store remembers about one step of the course. `best` is the highest
+ * score so far rather than the latest: a learner who passes and then replays a
+ * unit for revision must not be able to un-finish it with a careless run.
  */
-export const TASKS: { id: TaskId; label: string; xp: number }[] = [
-  { id: 'phonics', label: 'Pronuncia', xp: 15 },
-  { id: 'grammar', label: 'Grammatica', xp: 20 },
-  { id: 'word', label: 'Parola del giorno', xp: 10 },
-  { id: 'article', label: 'Lettura', xp: 20 },
-  { id: 'listening', label: 'Ascolto', xp: 20 },
-  { id: 'vocab', label: 'Quiz lessico', xp: 15 },
-  { id: 'drills', label: 'Coniugazioni', xp: 15 },
-  { id: 'conversation', label: 'Conversazione', xp: 15 },
-];
+export interface StepRecord {
+  done: boolean;
+  best: number;
+  attempts: number;
+}
 
 export interface Progress {
-  level: Level;
   xp: number;
   streak: number;
   lastActiveDay: string | null;
   /**
-   * `${day}::${level}` → task ids completed that day at that level.
-   *
-   * Keyed by level as well as day because the levels are separate courses:
-   * finishing the A1 word of the day says nothing about the A2 one, and
-   * marking both done from a single tap made a whole level look complete
-   * when it had not been started.
+   * Course progress, keyed by step id. This is the whole model: the level a
+   * learner is at is derived from which steps are passed, never stored, so
+   * there is no way for the two to disagree.
    */
-  completed: Record<string, TaskId[]>;
+  steps: Record<string, StepRecord>;
+  /** Steps finished per calendar day, for the activity heatmap. */
+  history: Record<string, number>;
   /** starred word ids, for the review deck */
   saved: string[];
   drills: { correct: number; attempted: number };
@@ -86,24 +80,17 @@ function storageKey(user: string): string {
   return `${KEY_PREFIX}/${user}`;
 }
 
-/** Completion is tracked per day *and* per level. */
-export function completionKey(day: string, level: Level): string {
-  return `${day}::${level}`;
-}
-
-/** Every task completed on a day, across all levels — for the activity heatmap. */
-export function completedOn(progress: Progress, day: string): TaskId[] {
-  return Object.entries(progress.completed)
-    .filter(([key]) => key.startsWith(`${day}::`))
-    .flatMap(([, tasks]) => tasks);
+/** How many steps were finished on a given day. */
+export function completedOn(progress: Progress, day: string): number {
+  return progress.history[day] ?? 0;
 }
 
 const EMPTY: Progress = {
-  level: 'B1',
   xp: 0,
   streak: 0,
   lastActiveDay: null,
-  completed: {},
+  steps: {},
+  history: {},
   saved: [],
   drills: { correct: 0, attempted: 0 },
   quiz: { correct: 0, attempted: 0 },
@@ -126,28 +113,31 @@ function migrateSrs(parsed: Partial<Progress> & { lexMet?: string[] }): Record<s
 }
 
 /**
- * Completion used to be keyed by day alone. Old entries are re-filed under the
- * level the profile was last using — the only level information those records
- * carry — so an existing streak and heatmap survive the change.
+ * The app used to serve a rotating daily lesson, and recorded which of that
+ * day's tasks were done under a `day::level` key. Those records cannot become
+ * course progress — a day's tasks were a slice of a level, not a step of a
+ * path — so the count per day is kept for the activity heatmap and the rest is
+ * let go. Streak, XP, saved words, the conversation deck and the whole spaced
+ * repetition schedule carry over untouched.
  */
-function migrateCompletion(completed: Record<string, TaskId[]>, level: Level): Record<string, TaskId[]> {
-  const out: Record<string, TaskId[]> = {};
-  for (const [key, tasks] of Object.entries(completed)) {
-    out[key.includes('::') ? key : completionKey(key, level)] = tasks;
+function migrateHistory(parsed: Partial<Progress> & { completed?: Record<string, string[]> }): Record<string, number> {
+  const history = { ...(parsed.history ?? {}) };
+  for (const [key, tasks] of Object.entries(parsed.completed ?? {})) {
+    const day = key.split('::')[0];
+    history[day] = (history[day] ?? 0) + (Array.isArray(tasks) ? tasks.length : 0);
   }
-  return out;
+  return history;
 }
 
 function parse(raw: string | null): Progress | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Partial<Progress>;
-    const level = parsed.level ?? EMPTY.level;
     return {
       ...EMPTY,
       ...parsed,
-      level,
-      completed: migrateCompletion(parsed.completed ?? {}, level),
+      steps: parsed.steps ?? {},
+      history: migrateHistory(parsed),
       drills: { ...EMPTY.drills, ...parsed.drills },
       quiz: { ...EMPTY.quiz, ...parsed.quiz },
       convDeck: { ...EMPTY.convDeck, ...parsed.convDeck },
@@ -244,21 +234,34 @@ function bumpStreak(prev: Progress, day: string): Pick<Progress, 'streak' | 'las
 }
 
 export const actions = {
-  setLevel(level: Level) {
-    set((p) => ({ ...p, level }));
-  },
-
-  completeTask(task: TaskId, day: string = dayKey(), level?: Level) {
+  /**
+   * Record an attempt at a step. The score decides whether it counts: a step is
+   * finished at PASS_MARK and stays finished, so replaying a unit for revision
+   * can raise a score but never take a level away.
+   *
+   * `pass` is passed in rather than computed here to keep the store ignorant of
+   * the course rules — the caller already knows what a pass means for its kind.
+   */
+  completeStep(
+    stepId: string,
+    { correct, total, pass, xp, day = dayKey() }: { correct: number; total: number; pass: boolean; xp: number; day?: string },
+  ) {
     set((p) => {
-      const key = completionKey(day, level ?? p.level);
-      const done = p.completed[key] ?? [];
-      if (done.includes(task)) return p;
-      const xp = TASKS.find((t) => t.id === task)?.xp ?? 0;
+      const prev = p.steps[stepId];
+      const score = total > 0 ? correct / total : pass ? 1 : 0;
+      const record: StepRecord = {
+        done: Boolean(prev?.done) || pass,
+        best: Math.max(prev?.best ?? 0, score),
+        attempts: (prev?.attempts ?? 0) + 1,
+      };
+      // Only the first pass pays: XP and the streak reward progress, not laps.
+      const firstPass = record.done && !prev?.done;
       return {
         ...p,
-        xp: p.xp + xp,
-        ...bumpStreak(p, day),
-        completed: { ...p.completed, [key]: [...done, task] },
+        steps: { ...p.steps, [stepId]: record },
+        xp: p.xp + (firstPass ? xp : 0),
+        history: firstPass ? { ...p.history, [day]: (p.history[day] ?? 0) + 1 } : p.history,
+        ...(firstPass ? bumpStreak(p, day) : { streak: p.streak, lastActiveDay: p.lastActiveDay }),
       };
     });
   },
@@ -342,34 +345,15 @@ export const actions = {
   },
 
   reset() {
-    set(() => ({ ...EMPTY, completed: {}, saved: [], convDeck: {}, scenesDone: [], srs: {} }));
+    set(() => ({ ...EMPTY, steps: {}, history: {}, saved: [], convDeck: {}, scenesDone: [], srs: {} }));
   },
 };
 
-/**
- * The tasks that actually exist in a given day's lesson. Levels differ — A1
- * has pronunciation and grammar lessons and the higher levels do not — and
- * counting a task with no content would leave the day permanently unfinished.
- */
-export function activeTasks(lesson: DailyLesson): TaskId[] {
-  return TASKS.filter((t) => {
-    if (t.id === 'phonics') return Boolean(lesson.phonics);
-    if (t.id === 'grammar') return Boolean(lesson.grammar);
-    return true;
-  }).map((t) => t.id);
-}
-
 export function useProgress() {
   const progress = useSyncExternalStore(subscribe, snapshot, snapshot);
-  const isDone = useCallback(
-    // Defaults to the level currently in play, so no call site has to thread it
-    // through and none can accidentally read another level's state.
-    (task: TaskId, day: string = dayKey(), level: Level = progress.level) =>
-      (progress.completed[completionKey(day, level)] ?? []).includes(task),
-    [progress],
-  );
+  const isDone = useCallback((stepId: string) => Boolean(progress.steps[stepId]?.done), [progress]);
   return { progress, isDone, ...actions };
 }
 
 /** Exported for tests. */
-export const _internals = { daysBetween, bumpStreak, EMPTY, read: snapshot, storageKey, LEGACY_KEY, migrateCompletion };
+export const _internals = { daysBetween, bumpStreak, EMPTY, read: snapshot, storageKey, LEGACY_KEY, migrateHistory };

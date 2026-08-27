@@ -1,16 +1,17 @@
 import type { PhonicsLesson } from '../data/types';
 import { LEVEL_RATE } from '../data/types';
 import { useItalianSpeech } from '../lib/speech';
-import { useProgress } from '../lib/progress';
+import { useStep } from '../lib/step';
 import { Quiz } from './Quiz';
+import { StepFooter } from './StepFooter';
 
 /**
  * Pronunciation is the one section where hearing the example matters more than
  * reading it, so every example word is individually playable and deliberately
  * slow — slower even than this level's normal rate.
  */
-export function Phonics({ lesson, day }: { lesson: PhonicsLesson; day: string }) {
-  const { completeTask, isDone, recordQuiz } = useProgress();
+export function Phonics({ lesson, stepId, onNext }: { lesson: PhonicsLesson; stepId: string; onNext?: () => void }) {
+  const step = useStep(stepId, 'phonics');
   const speech = useItalianSpeech([], LEVEL_RATE[lesson.level]);
   const canSpeak = speech.supported && speech.hasItalianVoice;
 
@@ -94,19 +95,8 @@ export function Phonics({ lesson, day }: { lesson: PhonicsLesson; day: string })
         <div className="card-head">
           <span className="eyebrow">Verifica</span>
         </div>
-        <Quiz
-          questions={lesson.questions}
-          resetKey={`${lesson.id}:${day}`}
-          onComplete={(correct, total) => {
-            recordQuiz(correct, total);
-            completeTask('phonics', day);
-          }}
-        />
-        {isDone('phonics', day) && (
-          <p className="muted small" style={{ marginTop: 12 }}>
-            ✓ Pronuncia di oggi completata.
-          </p>
-        )}
+        <Quiz questions={lesson.questions} resetKey={stepId} onComplete={step.report} />
+        <StepFooter done={step.done} best={step.best} attempts={step.attempts} onNext={onNext} />
       </section>
     </>
   );

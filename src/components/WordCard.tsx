@@ -1,17 +1,27 @@
+import { useMemo } from 'react';
 import type { WordEntry } from '../data/types';
 import { LEVEL_RATE } from '../data/types';
+import { WORDS } from '../data/words';
+import { buildVocabQuestions } from '../lib/daily';
 import { useItalianSpeech } from '../lib/speech';
 import { useProgress } from '../lib/progress';
+import { useStep } from '../lib/step';
+import { Quiz } from './Quiz';
+import { StepFooter } from './StepFooter';
 
-export function WordCard({ word }: { word: WordEntry }) {
-  const { progress, toggleSaved, completeTask, isDone } = useProgress();
+export function WordCard({ word, stepId, onNext }: { word: WordEntry; stepId: string; onNext?: () => void }) {
+  const { progress, toggleSaved } = useProgress();
+  const step = useStep(stepId, 'word');
   const speech = useItalianSpeech([], LEVEL_RATE[word.level]);
   const saved = progress.saved.includes(word.id);
+  // Distractors come from the same level, where they actually bite.
+  const questions = useMemo(() => buildVocabQuestions(word, WORDS.filter((w) => w.level === word.level)), [word]);
 
   return (
+    <>
     <section className="card">
       <div className="card-head">
-        <span className="eyebrow">Parola del giorno · {word.level}</span>
+        <span className="eyebrow">Parola · {word.level}</span>
         <span className="pill">{word.pos}{word.gender ? ` · ${word.gender}` : ''}</span>
       </div>
 
@@ -91,15 +101,16 @@ export function WordCard({ word }: { word: WordEntry }) {
         <button className="btn" onClick={() => toggleSaved(word.id)}>
           {saved ? '★ Salvata' : '☆ Salva nel ripasso'}
         </button>
-        <div className="spacer" />
-        <button
-          className="btn primary"
-          disabled={isDone('word')}
-          onClick={() => completeTask('word')}
-        >
-          {isDone('word') ? '✓ Studiata' : 'Segna come studiata'}
-        </button>
       </div>
     </section>
+
+    <section className="card">
+      <div className="card-head">
+        <span className="eyebrow">Verifica</span>
+      </div>
+      <Quiz questions={questions} resetKey={stepId} onComplete={step.report} />
+      <StepFooter done={step.done} best={step.best} attempts={step.attempts} onNext={onNext} />
+    </section>
+    </>
   );
 }

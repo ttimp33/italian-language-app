@@ -1,9 +1,9 @@
 # Italiano Quotidiano
 
-A daily Italian practice app for English speakers working from **A1 up to C2**. Every day it assembles one
-lesson at your level: a word with real usage notes, an article, a listening clip, a vocabulary quiz,
-conjugation drills, and a conversational-vocabulary deck — plus pronunciation and grammar lessons at the
-levels that need them.
+An Italian course for English speakers, running from **A1 to C2** as one ordered path. You start at A1;
+every other level is locked until the one before it is finished. Sixty-nine units and 269 steps cover the
+grammar, reading, listening, drills and conversational vocabulary each level is expected to master, and a
+step counts only when its check is passed at 80%.
 
 ```bash
 npm install
@@ -14,27 +14,53 @@ npm run build    # production bundle in dist/
 
 ## What it does
 
-| Section | What you get |
+Three sections. **Percorso** is the course; **Lessico** is the self-paced vocabulary bank; **Ripasso** is
+statistics, the activity heatmap and your saved words.
+
+| Step type | What you get |
 | --- | --- |
-| **Oggi** | The day's activities, progress bar, streak and XP. Six at most levels, eight at A1. |
-| **Pronuncia** *(A1)* | The alphabet and the letter combinations, with playable examples, minimal pairs and a check. |
-| **Grammatica** *(A1)* | One grammar point a day with paradigm tables, worked examples, the common error, and a check. |
-| **Lessico** *(A1–A2)* | **Self-paced.** Vocabulary built inside conversations, with spaced repetition. Work scenes in any order; the words come back on a schedule. |
-| **Parola** | Headword with IPA, gloss, a usage note written for English speakers, false-friend warnings, two example sentences, collocations, and the word family. Star it to add it to your review deck. |
-| **Lettura** | A level-calibrated article with paragraph-by-paragraph translation on demand, a glossary, and three comprehension questions. |
-| **Ascolto** | A dialogue or interview written for the ear. Transcript hidden by default, per-line replay, adjustable speed, key phrases, and comprehension questions. |
-| **Quiz** | Three auto-generated questions on the day's word: use in context, meaning, collocation. |
-| **Coniugazioni** | Four fill-in-the-blank drills targeting the grammar your level is supposed to be consolidating, each with a full explanation. |
-| **Conversazione** | The words that hold spoken Italian together — fillers, connectives, conversational nouns and adjectives — as a flashcard deck and as gap-fills set inside real dialogues. |
-| **Ripasso** | Accuracy statistics, a two-week activity heatmap, and your saved-word deck. |
+| **Pronuncia** | A letter or letter combination, with playable examples, minimal pairs and a check. |
+| **Grammatica** | One grammar point with paradigm tables, worked examples, the error English speakers actually make, and a check. |
+| **Parola** | Headword with IPA, gloss, a usage note written for English speakers, false-friend warnings, examples, collocations and the word family — then three questions on it. |
+| **Lettura** | A level-calibrated article with paragraph-by-paragraph translation on demand, a glossary and comprehension questions. |
+| **Ascolto** | A dialogue or interview written for the ear. Transcript hidden by default, per-line replay, adjustable speed, key phrases and questions. |
+| **Esercizi** | Fill-in-the-blank drills on the grammar the unit just taught, each with a full explanation. |
+| **Conversazione** | The words that hold spoken Italian together — fillers, connectives, conversational nouns and adjectives — as a deck you work until every card is recalled. |
+| **Dialoghi** | The same vocabulary as gap-fills set inside real exchanges. |
 
-## How the daily lesson is chosen
+**Lessico** sits outside the path: 79 scenes covering 1036 words, worked in any order, with spaced
+repetition bringing the words back on their own schedule. It is not gated and does not gate anything.
 
-Selection is deterministic, not random: a date-seeded index into each level's bank
-(`src/lib/daily.ts`). Two consequences that matter in use — the lesson stays put if you close the tab and
-come back later in the day, and the rotation walks the entire bank before anything repeats. Levels are
-offset from one another, so switching level gives you genuinely different material rather than the same
-slot number in a different bank.
+## The course
+
+`src/data/curriculum.ts` is the path: levels in order, units in order inside a level, steps in order inside
+a unit. Units hold *references* into the content banks rather than copies, so a lesson lives in exactly one
+file and can be re-sequenced without being rewritten.
+
+`src/lib/course.ts` holds the rules, and there are only a few:
+
+- A step is passed at **80%** of its check. Every lesson type reports the same two numbers — how many right,
+  out of how many — and `src/lib/step.ts` is the single place that decides what that means.
+- A unit is complete when all its steps are; a level when all its units are; and the next level opens only
+  then. A level with no course written cannot be entered and is never counted complete, so it can never
+  hand out the level after it for free.
+- Passing is **sticky**. Replaying a unit for revision can raise your best score but never takes a level
+  away, and XP and the streak are paid on the first pass only.
+- Steps unlock up to the first unfinished one, so you can always go back over what you have done.
+
+Two invariants are enforced by the test suite: every reference resolves to real content at the unit's own
+level, and every article, clip, word, drill and conversation card appears **exactly once** across the whole
+course. An orphan would be material a learner can never reach; a duplicate would be a step that is already
+finished when it opens.
+
+| Level | Units | Steps | Grammar spine |
+| --- | --- | --- | --- |
+| A1 | 14 | 56 | sounds and spelling, present tense, articles and agreement, prepositions, numbers and time, possessives, questions, modals, the imperative |
+| A2 | 12 | 45 | both pasts and the choice between them, future, conditional, formal imperative, direct and combined pronouns, reflexives, comparatives, progressive and impersonal *si* |
+| B1 | 12 | 44 | the subjunctive — forms, uses, past — plus both live conditionals, past conditional, pluperfect, future perfect, relatives, reported speech, the passive, non-finite clauses |
+| B2 | 11 | 42 | imperfect and pluperfect subjunctive, third and mixed conditionals, sequence of tenses, *andare* passive and *si passivante*, pronominal verbs, implicit constructions, register |
+| C1 | 10 | 40 | passato remoto and the narrative tenses, subjunctive in subordinates, nominalisation, dislocation and clefting, the four functions of *si*, verb government, text connectives |
+| C2 | 10 | 42 | bureaucratic and literary registers, phraseology, fossilised subjunctives, free indirect speech, irony and litotes, regional variation, loanwords, cohesion, near-synonyms |
 
 ## About the audio
 
@@ -81,18 +107,18 @@ Two study modes:
   different marker, the drill takes it and the explanation says why the keyed answer fits best.
 
 Banks live in `src/data/` (`words.ts`, `articles.ts`, `listening.ts`, `exercises.ts`, `conversation.ts`,
-`conversationDrills.ts`, `phonics.ts`, `grammar.ts`, `lexicon.ts`, `scenes.ts`). Adding an entry is enough for
-it to enter the rotation — or, for `lexicon.ts` and `scenes.ts`, the self-paced library — with no other wiring.
+`conversationDrills.ts`, `phonics.ts`, `grammar/`, `lexicon.ts`, `scenes.ts`). Adding an entry to a bank is a
+data edit; putting it in front of a learner means adding a step to a unit in `curriculum.ts`, and the test
+suite fails if you do one without the other.
 
 `npm test` enforces the invariants that make that safe: unique IDs, in-range answer indices, exactly one
 blank per cloze, every drill accepting its own answer, parallel text on every paragraph and transcript line,
 all four conversational roles present at every level, and every dialogue hint list containing a correct
 option.
 
-**Rotation depth is also enforced.** Articles and listening clips are six deep per level, and tests assert
-that seven consecutive days yield at least six distinct items and never the same one twice running. A
-three-item bank still changed daily but came round every third day, which in use read as "the section is not
-updating" — so the depth is a tested property, not a convention.
+**Course integrity is enforced too.** Every step must resolve to content at its own level; every unit needs a
+goal and at least three steps; step ids must be derived from the unit and the content they point at rather
+than numbered, so inserting a step in the middle of a unit cannot silently invalidate stored progress.
 
 ### Building the core vocabulary (A1–A2)
 
@@ -112,10 +138,10 @@ searchable word bank. The scene library and the word bank both carry an A1 / A2 
 the level you are studying: revising A1 while working at A2 is the normal case, not an edge case. Words can
 be removed again for anything already known.
 
-**This section is deliberately not part of the daily rotation.** A vocabulary bank rationed by the calendar
-is a worse vocabulary bank: you should be able to do four scenes on a wet Sunday and none on Tuesday. Scenes
-never expire and can be replayed. What *does* run on a schedule is the words, through spaced repetition —
-which is the part that genuinely needs a calendar.
+**This section is deliberately outside the course path.** A vocabulary bank rationed by unit order is a worse
+vocabulary bank: you should be able to do four scenes on a wet Sunday and none on Tuesday, whatever level you
+have reached. Scenes never expire, gate nothing and are gated by nothing. What *does* run on a schedule is
+the words, through spaced repetition — the part that genuinely needs a calendar.
 
 Three decisions do the real work:
 
@@ -162,12 +188,11 @@ Nouns are displayed with the article their **sound** requires, not their gender 
 error. A test asserts no rendered article can collide with the following sound.
 
 Rows in `lexicon.ts` are tuples rather than objects on purpose: at a thousand entries the object form is
-unmaintainable, one line per word is not. Adding words is a data edit; adding a scene wires itself into the
-daily rotation.
+unmaintainable, one line per word is not.
 
-### A1: pronunciation and grammar
+### A1: pronunciation
 
-A1 gets two sections the other levels do not, because a beginner needs them and a C1 learner does not.
+Pronunciation belongs to A1 and nowhere else, because a beginner needs it and a C1 learner does not.
 
 **Pronuncia** covers the alphabet, the five pure vowels, the hard/soft rule for `c` and `g`, the `gn`/`gli`/`sc`
 combinations, double consonants and stress. Italian spelling is nearly phonetic, so this is a solved problem

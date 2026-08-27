@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { derive, verify } from './auth';
 import { USERS, findUser, PBKDF2_ITERATIONS } from '../data/users';
-import { actions, completedOn, completionKey, setActiveUser, _internals } from './progress';
+import { actions, completedOn, setActiveUser, _internals } from './progress';
+
+/** Pass a step outright, the way a component would after a clean run. */
+const pass = (stepId: string, day = '2026-05-01') =>
+  actions.completeStep(stepId, { correct: 5, total: 5, pass: true, xp: 20, day });
+
+/** A failed attempt: recorded, but it does not finish the step. */
+const fail = (stepId: string, day = '2026-05-01') =>
+  actions.completeStep(stepId, { correct: 1, total: 5, pass: false, xp: 20, day });
 
 /**
  * A localStorage stand-in, since these tests run in Node. It also lets the
@@ -86,9 +94,9 @@ describe('profile isolation', () => {
 
   it('keeps each profile in its own storage key', () => {
     setActiveUser('tyler');
-    actions.completeTask('word', '2026-03-01');
+    pass('a1-u4/grammar/gr-a1-essere-avere', '2026-03-01');
     setActiveUser('jessica');
-    actions.completeTask('article', '2026-03-01');
+    pass('a1-u1/phonics/ph-a1-alfabeto', '2026-03-01');
 
     expect([...storage.store.keys()].sort()).toEqual([
       _internals.storageKey('jessica'),
@@ -98,14 +106,14 @@ describe('profile isolation', () => {
 
   it('shows each profile only its own progress', () => {
     setActiveUser('tyler');
-    actions.completeTask('word', '2026-03-01');
-    actions.completeTask('article', '2026-03-01');
+    pass('a1-u1/phonics/ph-a1-alfabeto', '2026-03-01');
+    pass('a1-u1/phonics/ph-a1-vocali', '2026-03-01');
     const tylerXp = _internals.read().xp;
     expect(tylerXp).toBeGreaterThan(0);
 
     setActiveUser('jessica');
     expect(_internals.read().xp).toBe(0);
-    expect(_internals.read().completed).toEqual({});
+    expect(_internals.read().steps).toEqual({});
 
     setActiveUser('tyler');
     expect(_internals.read().xp).toBe(tylerXp);
@@ -113,7 +121,7 @@ describe('profile isolation', () => {
 
   it('writes nothing while signed out, so the gate cannot leak into a profile', () => {
     setActiveUser(null);
-    actions.completeTask('word', '2026-03-01');
+    pass('a1-u1/phonics/ph-a1-alfabeto', '2026-03-01');
     actions.toggleSaved('a2-prenotare');
     expect(storage.store.size).toBe(0);
 
@@ -124,7 +132,7 @@ describe('profile isolation', () => {
 
   it('clears in-memory state on sign-out', () => {
     setActiveUser('tyler');
-    actions.completeTask('word', '2026-03-01');
+    pass('a1-u1/phonics/ph-a1-alfabeto', '2026-03-01');
     setActiveUser(null);
     expect(_internals.read().xp).toBe(0);
   });
@@ -151,75 +159,82 @@ describe('profile isolation', () => {
   });
 });
 
-describe('progress is per level as well as per day', () => {
+describe('recording a step', () => {
   beforeEach(() => {
     storage.clear();
     setActiveUser('tyler');
     actions.reset();
   });
 
-  it('does not mark a task done at another level', () => {
-    actions.setLevel('A1');
-    actions.completeTask('word', '2026-05-01');
-    const done = _internals.read().completed;
-    expect(done[completionKey('2026-05-01', 'A1')]).toEqual(['word']);
-    // The bug this replaces: one tap at A1 marked A2 complete too.
-    expect(done[completionKey('2026-05-01', 'A2')]).toBeUndefined();
+  const STEP = 'a1-u1/phonics/ph-a1-alfabeto';
+
+  it('finishes a step only when the attempt passes', () => {
+    fail(STEP);
+    expect(_internals.read().steps[STEP]).toMatchObject({ done: false, attempts: 1 });
+    expect(_internals.read().xp).toBe(0);
+
+    pass(STEP);
+    expect(_internals.read().steps[STEP]).toMatchObject({ done: true, attempts: 2, best: 1 });
+    expect(_internals.read().xp).toBe(20);
   });
 
-  it('tracks the same task separately at each level', () => {
-    actions.setLevel('A1');
-    actions.completeTask('word', '2026-05-01');
-    actions.setLevel('A2');
-    actions.completeTask('word', '2026-05-01');
-    actions.completeTask('article', '2026-05-01');
-
-    const done = _internals.read().completed;
-    expect(done[completionKey('2026-05-01', 'A1')]).toEqual(['word']);
-    expect(done[completionKey('2026-05-01', 'A2')]).toEqual(['word', 'article']);
+  it('keeps a step finished when a later run goes badly', () => {
+    pass(STEP);
+    fail(STEP);
+    // Revision must never be able to take a level away.
+    expect(_internals.read().steps[STEP].done).toBe(true);
+    expect(_internals.read().steps[STEP].best).toBe(1);
   });
 
-  it('awards xp for the same task once per level, not once overall', () => {
-    actions.setLevel('A1');
-    actions.completeTask('word', '2026-05-01');
-    const afterFirst = _internals.read().xp;
-    // Same level, same day, same task: no second award.
-    actions.completeTask('word', '2026-05-01');
-    expect(_internals.read().xp).toBe(afterFirst);
-    // Different level is genuinely different work.
-    actions.setLevel('A2');
-    actions.completeTask('word', '2026-05-01');
-    expect(_internals.read().xp).toBeGreaterThan(afterFirst);
+  it('pays xp once, on the first pass', () => {
+    pass(STEP);
+    const first = _internals.read().xp;
+    pass(STEP);
+    expect(_internals.read().xp).toBe(first);
   });
 
-  it('still counts a day as active whatever level the work happened at', () => {
-    actions.setLevel('A1');
-    actions.completeTask('word', '2026-05-01');
-    actions.setLevel('C2');
-    actions.completeTask('article', '2026-05-01');
-    expect(completedOn(_internals.read(), '2026-05-01')).toHaveLength(2);
-    expect(completedOn(_internals.read(), '2026-05-02')).toHaveLength(0);
+  it('counts a day as active only when something was actually finished', () => {
+    fail(STEP, '2026-05-01');
+    expect(completedOn(_internals.read(), '2026-05-01')).toBe(0);
+    expect(_internals.read().streak).toBe(0);
+
+    pass(STEP, '2026-05-01');
+    pass('a1-u1/phonics/ph-a1-vocali', '2026-05-01');
+    expect(completedOn(_internals.read(), '2026-05-01')).toBe(2);
+    expect(completedOn(_internals.read(), '2026-05-02')).toBe(0);
+    expect(_internals.read().streak).toBe(1);
   });
 
-  it('re-files pre-level records under the level the profile was using', () => {
-    const migrated = _internals.migrateCompletion(
-      { '2026-04-01': ['word', 'article'], '2026-04-02::B2': ['drills'] },
-      'B1',
-    );
-    expect(migrated[completionKey('2026-04-01', 'B1')]).toEqual(['word', 'article']);
-    // Already-keyed records are left exactly as they are.
-    expect(migrated['2026-04-02::B2']).toEqual(['drills']);
-    expect(migrated['2026-04-01']).toBeUndefined();
+  it('carries the old daily records over as heatmap history, and drops the rest', () => {
+    // The app used to record which of a day's rotating tasks were done, keyed
+    // by day and level. Those cannot become course steps — a day was a slice of
+    // a level, not a step of a path — so only the count per day survives.
+    const history = _internals.migrateHistory({
+      completed: { '2026-04-01::A2': ['word', 'article'], '2026-04-01::B1': ['drills'], '2026-04-02': ['word'] },
+    });
+    expect(history).toEqual({ '2026-04-01': 3, '2026-04-02': 1 });
   });
 
-  it('migrates stored data on load rather than dropping it', () => {
+  it('migrates a stored profile from the daily model without losing xp or the deck', () => {
     storage.setItem(
       _internals.storageKey('jessica'),
-      JSON.stringify({ level: 'A2', xp: 40, completed: { '2026-04-01': ['word'] } }),
+      JSON.stringify({
+        level: 'A2',
+        xp: 40,
+        streak: 6,
+        completed: { '2026-04-01::A2': ['word'] },
+        srs: { 'lx-a1-casa': { id: 'lx-a1-casa', due: '2026-04-02', interval: 3, ease: 2.5, reps: 2, lapses: 0 } },
+        convDeck: { 'cv-a1-ciao': 2 },
+      }),
     );
     setActiveUser('jessica');
     const p = _internals.read();
-    expect(p.completed[completionKey('2026-04-01', 'A2')]).toEqual(['word']);
     expect(p.xp).toBe(40);
+    expect(p.streak).toBe(6);
+    expect(p.history['2026-04-01']).toBe(1);
+    expect(p.srs['lx-a1-casa'].interval).toBe(3);
+    expect(p.convDeck['cv-a1-ciao']).toBe(2);
+    // The course itself starts from the beginning: there is nothing to inherit.
+    expect(p.steps).toEqual({});
   });
 });
