@@ -400,7 +400,7 @@ describe('core lexicon', () => {
   it('covers A1 and A2 only — a frequency list is not what C1 needs', () => {
     expect(LEXICON.every((e) => e.level === 'A1' || e.level === 'A2')).toBe(true);
     expect(LEXICON.filter((e) => e.level === 'A1').length).toBeGreaterThanOrEqual(150);
-    expect(LEXICON.filter((e) => e.level === 'A2').length).toBeGreaterThanOrEqual(140);
+    expect(LEXICON.filter((e) => e.level === 'A2').length).toBeGreaterThanOrEqual(150);
   });
 
   it('never lists the same lemma twice', () => {
@@ -476,9 +476,22 @@ describe('core lexicon', () => {
     }
   });
 
-  it('is building toward a thousand-word core', () => {
+  it('covers the thousand-word core it set out to', () => {
     expect(LEXICON_TARGET).toBe(1000);
-    expect(LEXICON.length).toBeLessThanOrEqual(LEXICON_TARGET);
+    expect(LEXICON.length).toBeGreaterThanOrEqual(LEXICON_TARGET);
+  });
+
+  it('has enough at each level for the CEFR expectation', () => {
+    // A1 is roughly 500 words, A2 roughly 1000 cumulative.
+    expect(LEXICON.filter((e) => e.level === 'A1').length).toBeGreaterThanOrEqual(350);
+    expect(LEXICON.filter((e) => e.level === 'A2').length).toBeGreaterThanOrEqual(550);
+  });
+
+  it('numbers the frequency ranks contiguously from one', () => {
+    const ranks = LEXICON.map((e) => e.rank).sort((a, b) => a - b);
+    expect(ranks[0]).toBe(1);
+    expect(ranks[ranks.length - 1]).toBe(LEXICON.length);
+    expect(new Set(ranks).size).toBe(LEXICON.length);
   });
 });
 

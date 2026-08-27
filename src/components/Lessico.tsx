@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Level, Scene } from '../data/types';
 import { LEVEL_RATE } from '../data/types';
-import { LEXICON_TARGET, clustersFor, lexById, lexiconByLevel, withArticle } from '../data/lexicon';
+import { LEXICON, LEXICON_TARGET, clustersFor, lexById, lexiconByLevel, withArticle } from '../data/lexicon';
+import type { LexEntry } from '../data/types';
 import { SCENES } from '../data/scenes';
 import { normalizeAnswer } from '../lib/daily';
 import { useProgress } from '../lib/progress';
 import { type Grade, dueCards, isLearned, summarise } from '../lib/srs';
 import { useItalianSpeech } from '../lib/speech';
 
-type View = { kind: 'libreria' } | { kind: 'scena'; id: string } | { kind: 'ripasso' };
+type View = { kind: 'libreria' } | { kind: 'scena'; id: string } | { kind: 'ripasso' } | { kind: 'parole' };
 
 /**
  * The vocabulary section is self-paced: it has no day, no rotation and no daily
@@ -28,6 +29,7 @@ export function Lessico({ level }: { level: Level }) {
     if (scene) return <SceneView scene={scene} onExit={() => setView({ kind: 'libreria' })} />;
   }
   if (view.kind === 'ripasso') return <ReviewView level={level} onExit={() => setView({ kind: 'libreria' })} />;
+  if (view.kind === 'parole') return <WordBank level={level} onExit={() => setView({ kind: 'libreria' })} />;
 
   return <Library level={level} onOpen={(v) => setView(v)} />;
 }
@@ -71,8 +73,8 @@ function Library({ level, onOpen }: { level: Level; onOpen: (v: View) => void })
         ) : (
           <p className="muted small" style={{ marginTop: 14 }}>
             {cards.length === 0
-              ? 'Completa una scena per far entrare le sue parole nel ripasso.'
-              : 'Nessuna parola in scadenza oggi. Torna domani, o comincia una scena nuova.'}
+              ? 'Aggiungi qualche parola dall’elenco, o comincia una scena: il ripasso parte da lì.'
+              : 'Nessuna parola in scadenza oggi. Torna domani, o aggiungine altre.'}
           </p>
         )}
       </section>
@@ -106,21 +108,24 @@ function Library({ level, onOpen }: { level: Level; onOpen: (v: View) => void })
       <section className="card">
         <div className="card-head">
           <span className="eyebrow">Il tuo lessico di base</span>
+          {/* Measured against the whole bank, not the 1000 milestone: the bank
+              now exceeds it, and a pill reading "1036 / 1000" is nonsense. */}
           <span className="pill">
-            {summary.total} / {LEXICON_TARGET}
+            {summary.total} / {LEXICON.length}
           </span>
         </div>
         <div
           className="progress-track"
           role="progressbar"
-          aria-valuenow={Math.round((summary.total / LEXICON_TARGET) * 100)}
+          aria-valuenow={Math.round((summary.total / LEXICON.length) * 100)}
           aria-valuemin={0}
           aria-valuemax={100}
         >
-          <div className="progress-fill" style={{ width: `${Math.min(100, (summary.total / LEXICON_TARGET) * 100)}%` }} />
+          <div className="progress-fill" style={{ width: `${Math.min(100, (summary.total / LEXICON.length) * 100)}%` }} />
         </div>
         <div className="muted small">
-          {summary.learned} consolidate · {summary.learning} ancora in apprendimento
+          {summary.learned} consolidate · {summary.learning} ancora in apprendimento · nucleo fondamentale di{' '}
+          {LEXICON_TARGET} parole superato ({LEXICON.length} in banca)
         </div>
 
         <div style={{ marginTop: 18 }}>
@@ -148,9 +153,14 @@ function Library({ level, onOpen }: { level: Level; onOpen: (v: View) => void })
             })}
           </div>
           <p className="muted small" style={{ marginTop: 10 }}>
-            In banca ci sono {levelWords.length} parole per il livello {level}. Il traguardo è il migliaio che copre la
-            maggior parte dell'italiano di tutti i giorni.
+            In banca ci sono {levelWords.length} parole per il livello {level}. Puoi aggiungerne quante vuoi, quando
+            vuoi: le scene sono un modo di incontrarle, non l'unico.
           </p>
+          <div className="actions">
+            <button className="btn primary" onClick={() => onOpen({ kind: 'parole' })}>
+              Sfoglia tutte le parole →
+            </button>
+          </div>
         </div>
       </section>
     </>
@@ -289,7 +299,7 @@ const STAGES: { id: Stage; label: string }[] = [
  * turn it back into a deck with a dialogue attached.
  */
 function SceneView({ scene, onExit }: { scene: Scene; onExit: () => void }) {
-  const { progress, completeScene, recordDrill } = useProgress();
+  const { progress, completeScene, addWords, removeWord, recordDrill } = useProgress();
   const speech = useItalianSpeech(
     scene.lines.map((l) => l.it),
     LEVEL_RATE[scene.level],
@@ -429,8 +439,18 @@ function SceneView({ scene, onExit }: { scene: Scene; onExit: () => void }) {
                       {/* Nouns carry their article: at A1 the article is part of
                           the word, and guessing it wrong is the commonest error. */}
                       <span className="lex-lemma">{withArticle(w)}</span>
-                      <span className="pill">
-                        {card ? (isLearned(card) ? 'consolidata' : `ripasso fra ${card.interval} g`) : 'nuova'}
+                      <span className="row-actions">
+                        <span className="pill">
+                          {card ? (isLearned(card) ? 'consolidata' : `ripasso fra ${card.interval} g`) : 'nuova'}
+                        </span>
+                        {/* Addable here and now: finishing the exercises is no
+                            longer the price of keeping a word. */}
+                        <button
+                          className={`btn tiny${card ? '' : ' primary'}`}
+                          onClick={() => (card ? removeWord(w.id) : addWords([w.id]))}
+                        >
+                          {card ? '✓ nel ripasso' : '+ aggiungi'}
+                        </button>
                       </span>
                     </div>
                     <div className="muted small">{w.gloss}</div>
@@ -458,6 +478,9 @@ function SceneView({ scene, onExit }: { scene: Scene; onExit: () => void }) {
               </div>
             ))}
             <div className="actions">
+              <button className="btn" onClick={() => addWords(words.map((w) => w.id))}>
+                + Aggiungi tutte al ripasso
+              </button>
               <div className="spacer" />
               <button className="btn primary" onClick={() => setStage('pratica')}>
                 Pratica →
@@ -581,6 +604,129 @@ function SceneView({ scene, onExit }: { scene: Scene; onExit: () => void }) {
           )}
         </section>
       )}
+    </>
+  );
+}
+
+/* ────────────────────────────── word bank ────────────────────────────── */
+
+/**
+ * The whole lexicon, browsable and addable a word or a cluster at a time.
+ *
+ * This exists because the scenes were a gate: a dozen of them cannot introduce a
+ * thousand words, so anything not in a scene was unreachable no matter how
+ * common it was. Scenes are now one way in rather than the only one.
+ */
+function WordBank({ level, onExit }: { level: Level; onExit: () => void }) {
+  const { progress, addWords, removeWord } = useProgress();
+  const speech = useItalianSpeech([], LEVEL_RATE[level]);
+  const canSpeak = speech.supported && speech.hasItalianVoice;
+
+  const groups = useMemo(() => clustersFor(level), [level]);
+  const [open, setOpen] = useState<string | null>(groups[0]?.cluster ?? null);
+  const [query, setQuery] = useState('');
+
+  const matches = (e: LexEntry) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return e.lemma.toLowerCase().includes(q) || e.gloss.toLowerCase().includes(q);
+  };
+
+  const inDeck = (id: string) => Boolean(progress.srs[id]);
+
+  return (
+    <>
+      <section className="card">
+        <div className="card-head">
+          <span className="eyebrow">Tutte le parole · {level}</span>
+          <button className="btn ghost tiny" onClick={onExit}>
+            ← indietro
+          </button>
+        </div>
+        <h1>Il nucleo fondamentale</h1>
+        <p className="muted small" style={{ marginTop: 6 }}>
+          Aggiungi quello che vuoi studiare: una parola, o un'area intera. Entra subito nel ripasso e torna secondo la
+          sua scadenza.
+        </p>
+        <label className="field">
+          <span className="eyebrow">Cerca</span>
+          <input
+            className="cloze-input"
+            style={{ width: '100%' }}
+            value={query}
+            placeholder="parola o significato…"
+            aria-label="Cerca una parola"
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+      </section>
+
+      {groups.map(({ cluster, entries }) => {
+        const shown = entries.filter(matches);
+        if (shown.length === 0) return null;
+        const added = shown.filter((e) => inDeck(e.id)).length;
+        const expanded = open === cluster || query.trim().length > 0;
+
+        return (
+          <section className="card" key={cluster}>
+            <div className="card-head">
+              <button
+                className="btn ghost"
+                style={{ paddingLeft: 0 }}
+                aria-expanded={expanded}
+                onClick={() => setOpen(expanded && !query ? null : cluster)}
+              >
+                {expanded ? '▾' : '▸'} {cluster}
+              </button>
+              <span className="pill">
+                {added} / {shown.length}
+              </span>
+            </div>
+
+            {expanded && (
+              <>
+                <div className="actions" style={{ marginTop: 4 }}>
+                  <button
+                    className="btn"
+                    disabled={added === shown.length}
+                    onClick={() => addWords(shown.map((e) => e.id))}
+                  >
+                    + Aggiungi tutta l'area ({shown.length - added})
+                  </button>
+                </div>
+                <ul className="examples">
+                  {shown.map((e) => (
+                    <li key={e.id}>
+                      <div className="card-head" style={{ marginBottom: 2 }}>
+                        <span className="lex-lemma">{withArticle(e)}</span>
+                        <button
+                          className={`btn tiny${inDeck(e.id) ? '' : ' primary'}`}
+                          onClick={() => (inDeck(e.id) ? removeWord(e.id) : addWords([e.id]))}
+                          aria-label={inDeck(e.id) ? `Togli ${e.lemma}` : `Aggiungi ${e.lemma}`}
+                        >
+                          {inDeck(e.id) ? '✓ nel ripasso' : '+ aggiungi'}
+                        </button>
+                      </div>
+                      <div className="muted small">
+                        #{e.rank} · {e.pos} · {e.gloss}
+                      </div>
+                      <div className="example-it" style={{ marginTop: 4 }}>
+                        {e.chunk.it}
+                        {canSpeak && (
+                          <button className="btn ghost tiny" onClick={() => speech.speakText(e.chunk.it, LEVEL_RATE[level])}>
+                            ▸
+                          </button>
+                        )}
+                      </div>
+                      <div className="example-en">{e.chunk.en}</div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </section>
+        );
+      })}
     </>
   );
 }
