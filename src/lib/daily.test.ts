@@ -21,6 +21,7 @@ import { PHONICS } from '../data/phonics';
 import { GRAMMAR } from '../data/grammar';
 import { LEXICON, LEXICON_TARGET, clustersFor, lexById, withArticle } from '../data/lexicon';
 import { SCENES } from '../data/scenes';
+import { SCENE_LEVELS } from '../data/sceneLevels';
 
 describe('daily selection', () => {
   it('is stable for the same day and level', () => {
@@ -546,6 +547,29 @@ describe('vocabulary scenes', () => {
       expect(scene.lines.every((l) => l.speaker.trim() && l.it.trim() && l.en.trim())).toBe(true);
       expect(scene.notes.length, `${scene.id} notes`).toBeGreaterThanOrEqual(2);
     }
+  });
+
+  it('reaches every word in the bank through at least one scene', () => {
+    // The scenes are the way a word is met in context. A word no scene teaches
+    // is reachable only from the flat word list, which is the flashcard layout
+    // this section exists to avoid.
+    const taught = new Set(SCENES.flatMap((s) => s.teaches));
+    const orphans = LEXICON.filter((e) => !taught.has(e.id)).map((e) => e.id);
+    expect(orphans, `${orphans.length} words have no scene`).toEqual([]);
+  });
+
+  it('lists the levels that have scenes without importing the bank', () => {
+    // App.tsx reads SCENE_LEVELS instead of SCENES so the scene bank stays out
+    // of the first paint. That shortcut is only safe while the two agree.
+    expect([...SCENE_LEVELS].sort()).toEqual([...new Set(SCENES.map((s) => s.level))].sort());
+  });
+
+  it('keeps every scene, practice and choice id unique', () => {
+    const sceneIds = SCENES.map((s) => s.id);
+    expect(new Set(sceneIds).size, 'duplicate scene id').toBe(sceneIds.length);
+    // Answers are stored by id, so a collision would mark two exercises at once.
+    const itemIds = SCENES.flatMap((s) => [...s.practice.map((p) => p.id), ...s.choices.map((c) => c.id)]);
+    expect(new Set(itemIds).size, 'duplicate exercise id').toBe(itemIds.length);
   });
 
   it('is deliberately absent from the daily rotation', () => {

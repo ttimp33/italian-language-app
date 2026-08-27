@@ -103,10 +103,14 @@ first thousand does most of the work, and which maps almost exactly onto what CE
 **The bank now holds 1036 entries** — 400 at A1 and 636 at A2 — so the thousand-word core is covered rather
 than aimed at. Ranks are contiguous from 1, every A1 rank precedes every A2 one, and tests enforce both.
 
-**Nothing is gated.** Words can be added to the schedule at any moment: one at a time, a whole semantic
-cluster at once, from a scene without finishing its exercises, or from the searchable word bank. Scenes are
-*one* way of meeting a word, not the only one — a dozen scenes cannot introduce a thousand words, and
-requiring them made most of the bank unreachable. Words can be removed again for anything already known.
+**Every word has a scene.** 79 scenes cover all 1036 entries — 30 at A1, 49 at A2 — so no word is reachable
+only as a flashcard. A test fails the build if a word is added to the bank without a scene that teaches it.
+
+**Nothing is gated, and nothing is hidden by level.** Words can be added to the schedule at any moment: one
+at a time, a whole semantic cluster at once, from a scene without finishing its exercises, or from the
+searchable word bank. The scene library and the word bank both carry an A1 / A2 / all filter that starts on
+the level you are studying: revising A1 while working at A2 is the normal case, not an edge case. Words can
+be removed again for anything already known.
 
 **This section is deliberately not part of the daily rotation.** A vocabulary bank rationed by the calendar
 is a worse vocabulary bank: you should be able to do four scenes on a wet Sunday and none on Tuesday. Scenes
@@ -115,6 +119,9 @@ which is the part that genuinely needs a calendar.
 
 Three decisions do the real work:
 
+- **The section loads on demand.** Scenes and lexicon together outweigh the rest of the app, so they are
+  split into their own chunk and fetched when the tab is first opened. The service worker precaches it, so
+  offline is unaffected.
 - **Every entry stores a chunk, not a definition.** Knowing `mano` means "hand" is close to useless;
   knowing `dammi una mano` is immediately usable. Words are held in the shape they actually arrive in.
 - **Words are met inside a scene before they are ever listed.** Each scene runs in a fixed order —
@@ -199,6 +206,10 @@ is what the service worker adds.
   old version for ever — the browser keeps serving stale HTML and the user never sees a new release.
 - The cache name is a content hash of the build, so an unchanged redeploy does not discard a working cache,
   and old caches are deleted on activation.
+- **Matches ignore `Vary`.** Servers routinely answer assets with `Vary: Origin`, and a module script is
+  fetched in CORS mode with an `Origin` header the precache request never carried. A strict match therefore
+  misses every asset and the app comes up blank offline with a cache that is completely full. `src/lib/sw.test.ts`
+  guards this and the network-first document rule, since neither shows up in development.
 - Registration failure is non-fatal. An app that will not start because its caching layer errored is worse
   than one that simply needs a connection.
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { LEVELS, type Level } from './data/types';
 import { buildDailyLesson, dayKey } from './lib/daily';
 import { activeTasks, useProgress, type TaskId } from './lib/progress';
@@ -11,11 +11,16 @@ import { Quiz } from './components/Quiz';
 import { Conversation } from './components/Conversation';
 import { Phonics } from './components/Phonics';
 import { Grammar } from './components/Grammar';
-import { Lessico } from './components/Lessico';
-import { SCENES } from './data/scenes';
+import { SCENE_LEVELS } from './data/sceneLevels';
 import { Review } from './components/Review';
 import { SignIn } from './components/SignIn';
 import { initSession, signOut, useSession } from './lib/auth';
+
+// The vocabulary section carries the scene bank and the thousand-word lexicon —
+// together the largest part of the app, and needed only once the learner opens
+// that tab. Splitting it keeps the daily lesson's first paint small; the
+// service worker precaches the chunk, so it is there offline all the same.
+const Lessico = lazy(() => import('./components/Lessico').then((m) => ({ default: m.Lessico })));
 
 // Restore any previous session before React first renders, so a signed-in
 // visitor never sees the gate flash on the way to their dashboard.
@@ -58,7 +63,7 @@ export default function App() {
   const available = activeTasks(lesson);
   // Lessico is self-paced, so it is not a daily task; it appears wherever the
   // level has scenes to work through.
-  const hasScenes = SCENES.some((s) => s.level === progress.level);
+  const hasScenes = SCENE_LEVELS.includes(progress.level);
   const visibleTabs = TABS.filter((t) => {
     if (t.id === 'oggi' || t.id === 'ripasso') return true;
     if (t.id === 'lessico') return hasScenes;
@@ -163,7 +168,11 @@ export default function App() {
 
         {activeTab === 'grammar' && lesson.grammar && <Grammar lesson={lesson.grammar} day={day} />}
 
-        {activeTab === 'lessico' && <Lessico level={progress.level} />}
+        {activeTab === 'lessico' && (
+          <Suspense fallback={<section className="card"><p className="muted">Carico il lessico…</p></section>}>
+            <Lessico level={progress.level} />
+          </Suspense>
+        )}
 
         {activeTab === 'ripasso' && <Review />}
       </main>
