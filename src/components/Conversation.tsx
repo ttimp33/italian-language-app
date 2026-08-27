@@ -36,12 +36,16 @@ export function ConvCards({
   const [flipped, setFlipped] = useState(false);
   const [graded, setGraded] = useState(0);
 
+  // Keyed on the step alone. `cards` is rebuilt from the step's refs on every
+  // render, so depending on the array itself reset the queue after every grade
+  // and the deck could never be finished.
   useEffect(() => {
     setQueue(cards.map((c) => c.id));
     setFlipped(false);
     setGraded(0);
     setFirstTry({});
-  }, [stepId, cards]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepId]);
 
   const byId = useMemo(() => new Map(cards.map((c) => [c.id, c])), [cards]);
   const current = queue.length > 0 ? byId.get(queue[0]) : undefined;
@@ -94,6 +98,19 @@ export function ConvCards({
   const confidence = progress.convDeck[current.id] ?? 0;
 
   return (
+    <>
+    <section className="card">
+      <div className="card-head">
+        <span className="eyebrow">Conversazione · {current.level}</span>
+        <span className="pill">{cards.length} carte</span>
+      </div>
+      <h1>Le parole che tengono insieme il parlato</h1>
+      <p className="muted small" style={{ marginTop: 6 }}>
+        Segnali discorsivi, connettivi e aggettivi che i manuali saltano. I dizionari ne danno il significato; qui
+        trovi la funzione. Una carta richiamata esce dal mazzo; una mancata torna in fondo.
+      </p>
+    </section>
+
     <section className="card">
       <div className="card-head">
         <span className="eyebrow">
@@ -174,6 +191,7 @@ export function ConvCards({
         </div>
       )}
     </section>
+    </>
   );
 }
 
@@ -195,11 +213,12 @@ export function ConvDialogues({
   const [results, setResults] = useState<Record<string, { value: string; correct: boolean; revealed: boolean }>>({});
   const [hinted, setHinted] = useState<Record<string, boolean>>({});
 
+  // Keyed on the step alone, for the same reason as the deck above.
   useEffect(() => {
     setInputs({});
     setResults({});
     setHinted({});
-  }, [stepId, drills]);
+  }, [stepId]);
 
   const check = (item: ConvCloze) => {
     const value = inputs[item.id] ?? '';
@@ -226,6 +245,18 @@ export function ConvDialogues({
 
   return (
     <>
+      <section className="card">
+        <div className="card-head">
+          <span className="eyebrow">Dialoghi · {drills[0]?.level}</span>
+          <span className="pill">{drills.length} dialoghi</span>
+        </div>
+        <h1>Completa la battuta</h1>
+        <p className="muted small" style={{ marginTop: 6 }}>
+          Manca una parola in una riga di ogni scambio. Se non ti viene, chiedi i suggerimenti: contano come
+          errore, ma il dialogo resta comprensibile.
+        </p>
+      </section>
+
       {drills.map((item) => {
         const blankAt = blankLineIndex(item);
         const result = results[item.id];

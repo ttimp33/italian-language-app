@@ -264,7 +264,202 @@ const B1: Unit[] = [
   ]),
 ];
 
-export const CURRICULUM: Unit[] = [...A1, ...A2, ...B1];
+const B2: Unit[] = [
+  unit('b2-u1', 'B2', 'Il congiuntivo imperfetto', 'Carry the subjunctive into past contexts, and handle come se.', [
+    ['grammar', 'gr-b2-congiuntivo-imperfetto'],
+    ['drills', 'b2-cz-1', 'b2-cz-2'],
+    ['word', 'b2-accorgersi'],
+  ]),
+  unit('b2-u2', 'B2', 'Il congiuntivo trapassato', 'Talk about a past that never happened.', [
+    ['grammar', 'gr-b2-congiuntivo-trapassato'],
+    ['drills', 'b2-cz-3'],
+    ['article', 'b2-art-numero-chiuso'],
+  ]),
+  unit('b2-u3', 'B2', 'Ipotesi impossibili e miste', 'Build the third conditional, and mix times when the sense requires it.', [
+    ['grammar', 'gr-b2-ipotetico-terzo'],
+    ['drills', 'b2-cz-4', 'b2-cz-5'],
+    ['listening', 'b2-clip-esame'],
+    ['word', 'b2-sottovalutare'],
+  ]),
+  unit('b2-u4', 'B2', 'La concordanza dei tempi', 'Keep a complex sentence consistent from main clause to subordinate.', [
+    ['grammar', 'gr-b2-concordanza'],
+    ['drills', 'b2-cz-6', 'b2-cz-7'],
+    ['article', 'b2-disconnessione'],
+  ]),
+  unit('b2-u5', 'B2', 'Va fatto, si è deciso', 'Express obligation and impersonality the way official Italian does.', [
+    ['grammar', 'gr-b2-passivo-avanzato'],
+    ['drills', 'b2-cz-8'],
+    ['listening', 'b2-clip-progetto'],
+    ['word', 'b2-scadenza'],
+  ]),
+  unit('b2-u6', 'B2', 'Cavarsela, prendersela', 'Use the pronominal verbs that carry most of spoken Italian.', [
+    ['grammar', 'gr-b2-verbi-pronominali'],
+    ['conversation', 'cv-b2-appunto', 'cv-b2-praticamente', 'cv-b2-diciamo', 'cv-b2-mah', 'cv-b2-in-effetti'],
+    ['word', 'b2-affrontare'],
+  ]),
+  unit('b2-u7', 'B2', 'Costruzioni implicite', 'Compress subordinate clauses the way written Italian prefers.', [
+    ['grammar', 'gr-b2-implicite-avanzate'],
+    ['drills', 'b2-cz-9'],
+    ['article', 'b2-spopolamento'],
+    ['word', 'b2-incidere'],
+  ]),
+  unit('b2-u8', 'B2', 'Argomentare', 'Concede, qualify and reframe instead of merely contrasting.', [
+    ['grammar', 'gr-b2-connettivi-argomentativi'],
+    ['article', 'b2-art-settimana-corta'],
+    ['conversation', 'cv-b2-piuttosto', 'cv-b2-del-resto', 'cv-b2-spunto', 'cv-b2-sfumatura', 'cv-b2-azzeccato'],
+    ['word', 'b2-altrimenti'],
+  ]),
+  unit('b2-u9', 'B2', 'Dove va l’aggettivo', 'Place an adjective where it says what you mean.', [
+    ['grammar', 'gr-b2-aggettivi-posizione'],
+    ['drills', 'b2-cz-10'],
+    ['listening', 'b2-clip-turismo'],
+    ['word', 'b2-pregiudizio'],
+  ]),
+  unit('b2-u10', 'B2', 'Riportare domande e ordini', 'Report a question, a command and a hypothesis without losing the thread.', [
+    ['grammar', 'gr-b2-discorso-indiretto-avanzato'],
+    ['listening', 'b2-clip-trasloco'],
+    ['convdrill', 'cc-b2-1', 'cc-b2-2', 'cc-b2-3'],
+  ]),
+  unit('b2-u11', 'B2', 'Questione di registro', 'Write the same message formally, neutrally and informally — and keep it consistent.', [
+    ['grammar', 'gr-b2-registri'],
+    ['article', 'b2-cibo'],
+    ['article', 'b2-art-volontariato'],
+    ['listening', 'b2-clip-smart'],
+    ['listening', 'b2-clip-sport'],
+    ['word', 'b2-sfida'],
+    ['convdrill', 'cc-b2-4', 'cc-b2-5', 'cc-b2-6'],
+  ]),
+];
+
+const C1: Unit[] = [
+  unit('c1-u1', 'C1', 'Il passato remoto', 'Read narrative Italian, and recognise the tense the south still speaks.', [
+    ['grammar', 'gr-c1-passato-remoto'],
+    ['drills', 'c1-cz-1', 'c1-cz-2'],
+    ['article', 'c1-dialetti'],
+  ]),
+  unit('c1-u2', 'C1', 'I tempi della narrazione', 'Place events, background and anteriority in a long narrative.', [
+    ['grammar', 'gr-c1-tempi-narrativi'],
+    ['drills', 'c1-cz-3'],
+    ['listening', 'c1-clip-memoria'],
+    ['word', 'c1-ravvisare'],
+  ]),
+  unit('c1-u3', 'C1', 'Il congiuntivo nelle subordinate', 'Use the mood that marks the hypothetical, the sought and the evaluated.', [
+    ['grammar', 'gr-c1-congiuntivo-subordinate'],
+    ['drills', 'c1-cz-4', 'c1-cz-5'],
+    ['article', 'c1-art-precariato'],
+  ]),
+  unit('c1-u4', 'C1', 'Lo stile giornalistico', 'Read a headline and an official notice at speed.', [
+    ['grammar', 'gr-c1-nominalizzazione'],
+    ['article', 'c1-art-divario'],
+    ['listening', 'c1-clip-editoria'],
+    ['word', 'c1-divario'],
+  ]),
+  unit('c1-u5', 'C1', 'Mettere in rilievo', 'Use word order to say what matters, the way spoken Italian does.', [
+    ['grammar', 'gr-c1-dislocazioni'],
+    ['drills', 'c1-cz-6'],
+    ['conversation', 'cv-c1-per-lappunto', 'cv-c1-a-dire-il-vero', 'cv-c1-se-vogliamo', 'cv-c1-figurati', 'cv-c1-peraltro'],
+  ]),
+  unit('c1-u6', 'C1', 'Le quattro funzioni del si', 'Parse any si, and get the agreement right in each case.', [
+    ['grammar', 'gr-c1-si-quattro'],
+    ['drills', 'c1-cz-7'],
+    ['article', 'c1-urbanistica'],
+    ['word', 'c1-sopperire'],
+  ]),
+  unit('c1-u7', 'C1', 'Concedere e limitare', 'Concede ground precisely, and carve out exceptions.', [
+    ['grammar', 'gr-c1-concessive'],
+    ['drills', 'c1-cz-8'],
+    ['listening', 'c1-clip-sanita'],
+    ['word', 'c1-stemperare'],
+  ]),
+  unit('c1-u8', 'C1', 'Le reggenze', 'Fix the prepositions that survive every other kind of accuracy.', [
+    ['grammar', 'gr-c1-reggenze'],
+    ['drills', 'c1-cz-9', 'c1-cz-10'],
+    ['listening', 'c1-clip-restauro'],
+    ['word', 'c1-a-fronte-di'],
+  ]),
+  unit('c1-u9', 'C1', 'Organizzare un testo', 'Signal structure across paragraphs, not just clauses.', [
+    ['grammar', 'gr-c1-connettivi-testuali'],
+    ['article', 'c1-art-paesaggio'],
+    ['conversation', 'cv-c1-oltretutto', 'cv-c1-non-a-caso', 'cv-c1-risvolto', 'cv-c1-premessa', 'cv-c1-calzante'],
+    ['word', 'c1-lungimiranza'],
+  ]),
+  unit('c1-u10', 'C1', 'Il registro alto', 'Read administrative and academic Italian without stumbling.', [
+    ['grammar', 'gr-c1-lessico-formale'],
+    ['article', 'c1-art-poverta'],
+    ['listening', 'c1-clip-radio'],
+    ['listening', 'c1-clip-insegnanti'],
+    ['word', 'c1-inasprimento'],
+    ['word', 'c1-arginare'],
+    ['convdrill', 'cc-c1-1', 'cc-c1-2', 'cc-c1-3', 'cc-c1-4', 'cc-c1-5', 'cc-c1-6'],
+  ]),
+];
+
+const C2: Unit[] = [
+  unit('c2-u1', 'C2', 'Burocratese', 'Read a contract, a summons and a circular for what they actually say.', [
+    ['grammar', 'gr-c2-burocratese'],
+    ['drills', 'c2-cz-1', 'c2-cz-2'],
+    ['article', 'c2-art-canone'],
+    ['word', 'c2-ottemperare'],
+  ]),
+  unit('c2-u2', 'C2', 'Registro letterario', 'Recognise marked syntax as meaning rather than as difficulty.', [
+    ['grammar', 'gr-c2-letterario'],
+    ['drills', 'c2-cz-3'],
+    ['article', 'c2-retorica'],
+    ['word', 'c2-lambire'],
+  ]),
+  unit('c2-u3', 'C2', 'Fraseologia', 'Use and understand the fixed expressions that cannot be assembled.', [
+    ['grammar', 'gr-c2-fraseologia'],
+    ['drills', 'c2-cz-4'],
+    ['conversation', 'cv-c2-beninteso', 'cv-c2-per-inciso', 'cv-c2-a-rigore', 'cv-c2-quantomeno', 'cv-c2-per-contro'],
+  ]),
+  unit('c2-u4', 'C2', 'Il congiuntivo fossile', 'Handle the subjunctive where no rule explains it any more.', [
+    ['grammar', 'gr-c2-congiuntivo-formule'],
+    ['drills', 'c2-cz-5'],
+    ['listening', 'c2-clip-traduzione'],
+    ['word', 'c2-dirimere'],
+  ]),
+  unit('c2-u5', 'C2', 'Il discorso indiretto libero', 'Hear a character’s voice inside the narrator’s sentence.', [
+    ['grammar', 'gr-c2-indiretto-libero'],
+    ['article', 'c2-art-perizia'],
+    ['article', 'c2-art-caparbieta'],
+    ['listening', 'c2-clip-doppiaggio'],
+    ['word', 'c2-caparbieta'],
+  ]),
+  unit('c2-u6', 'C2', 'Ironia e attenuazione', 'Say less than you mean, and hear when someone else is.', [
+    ['grammar', 'gr-c2-ironia'],
+    ['drills', 'c2-cz-6'],
+    ['listening', 'c2-clip-comico'],
+    ['word', 'c2-blandire'],
+  ]),
+  unit('c2-u7', 'C2', 'Varietà e standard', 'Tell regional from substandard from what has quietly become normal.', [
+    ['grammar', 'gr-c2-varieta'],
+    ['drills', 'c2-cz-7'],
+    ['article', 'c2-art-certificazioni'],
+    ['word', 'c2-appannaggio'],
+  ]),
+  unit('c2-u8', 'C2', 'Prestiti e falsi amici', 'Handle loanwords, calques and the false friends that outlive everything else.', [
+    ['grammar', 'gr-c2-neologismi'],
+    ['drills', 'c2-cz-8'],
+    ['listening', 'c2-clip-archivio'],
+    ['word', 'c2-surrettizio'],
+  ]),
+  unit('c2-u9', 'C2', 'Coesione e coerenza', 'Make a long text hold together the way Italian expects.', [
+    ['grammar', 'gr-c2-coesione'],
+    ['drills', 'c2-cz-9'],
+    ['article', 'c2-art-coacervo'],
+    ['word', 'c2-coacervo'],
+    ['conversation', 'cv-c2-fermo-restando', 'cv-c2-tanto-piu-che', 'cv-c2-postilla', 'cv-c2-distinguo', 'cv-c2-lapidario'],
+  ]),
+  unit('c2-u10', 'C2', 'Sfumature', 'Choose between near-synonyms the way someone who grew up with them does.', [
+    ['grammar', 'gr-c2-sfumature'],
+    ['drills', 'c2-cz-10'],
+    ['listening', 'c2-clip-mostra'],
+    ['listening', 'c2-clip-fonti'],
+    ['convdrill', 'cc-c2-1', 'cc-c2-2', 'cc-c2-3', 'cc-c2-4', 'cc-c2-5', 'cc-c2-6'],
+  ]),
+];
+
+export const CURRICULUM: Unit[] = [...A1, ...A2, ...B1, ...B2, ...C1, ...C2];
 
 /** The levels that have a course written, in order. */
 export const COURSE_LEVELS: Level[] = [...new Set(CURRICULUM.map((u) => u.level))];

@@ -2,6 +2,9 @@ import type { GrammarLesson } from '../types';
 import { GRAMMAR_A1 } from './a1';
 import { GRAMMAR_A2 } from './a2';
 import { GRAMMAR_B1 } from './b1';
+import { GRAMMAR_B2 } from './b2';
+import { GRAMMAR_C1 } from './c1';
+import { GRAMMAR_C2 } from './c2';
 
 /**
  * Every grammar lesson in the app, one file per level.
@@ -10,6 +13,6 @@ import { GRAMMAR_B1 } from './b1';
  * is decided by the course path in `curriculum.ts`. Keeping the two apart means
  * a lesson can be re-sequenced without touching its content.
  */
-export const GRAMMAR: GrammarLesson[] = [...GRAMMAR_A1, ...GRAMMAR_A2, ...GRAMMAR_B1];
+export const GRAMMAR: GrammarLesson[] = [...GRAMMAR_A1, ...GRAMMAR_A2, ...GRAMMAR_B1, ...GRAMMAR_B2, ...GRAMMAR_C1, ...GRAMMAR_C2];
 
 export const grammarByLevel = (level: GrammarLesson['level']) => GRAMMAR.filter((g) => g.level === level);
