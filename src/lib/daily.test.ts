@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   blankLineIndex,
-  buildDailyLesson,
-  dayKey,
+  buildVocabQuestions,
   isAnswerCorrect,
   isConvAnswerCorrect,
   normalizeAnswer,
-  pickFor,
   seededShuffle,
 } from './daily';
-import { _internals, actions, activeTasks, CONV_MASTERY, TASKS } from './progress';
+import { _internals, actions, CONV_MASTERY } from './progress';
+import { CURRICULUM } from '../data/curriculum';
 import { LEVELS } from '../data/types';
 import { WORDS } from '../data/words';
 import { ARTICLES } from '../data/articles';
@@ -23,79 +22,30 @@ import { LEXICON, LEXICON_TARGET, clustersFor, lexById, withArticle } from '../d
 import { SCENES } from '../data/scenes';
 import { SCENE_LEVELS } from '../data/sceneLevels';
 
-describe('daily selection', () => {
-  it('is stable for the same day and level', () => {
-    const a = buildDailyLesson('B1', '2026-03-04');
-    const b = buildDailyLesson('B1', '2026-03-04');
-    expect(a.word.id).toBe(b.word.id);
-    expect(a.article.id).toBe(b.article.id);
-    expect(a.clip.id).toBe(b.clip.id);
-    expect(a.cloze.map((c) => c.id)).toEqual(b.cloze.map((c) => c.id));
-  });
-
-  it('changes from one day to the next', () => {
-    const a = buildDailyLesson('B2', '2026-03-04');
-    const b = buildDailyLesson('B2', '2026-03-05');
-    expect(a.word.id).not.toBe(b.word.id);
-  });
-
-  it('cycles through the whole bank before repeating a word', () => {
-    for (const level of LEVELS) {
-      const bank = WORDS.filter((w) => w.level === level);
-      const seen = new Set<string>();
-      for (let i = 0; i < bank.length; i++) {
-        const d = new Date(Date.UTC(2026, 0, 1 + i));
-        seen.add(buildDailyLesson(level, dayKey(d)).word.id);
-      }
-      expect(seen.size).toBe(bank.length);
-    }
-  });
-
-  it('builds a complete lesson for every level', () => {
-    for (const level of LEVELS) {
-      const lesson = buildDailyLesson(level, '2026-06-15');
-      expect(lesson.word.level).toBe(level);
-      expect(lesson.article.level).toBe(level);
-      expect(lesson.clip.level).toBe(level);
-      expect(lesson.cloze).toHaveLength(4);
-      expect(lesson.cloze.every((c) => c.level === level)).toBe(true);
-      expect(lesson.vocabQuiz).toHaveLength(3);
-      expect(lesson.convCards).toHaveLength(6);
-      expect(lesson.convCards.every((c) => c.level === level)).toBe(true);
-      expect(lesson.convCloze).toHaveLength(3);
-      expect(lesson.convCloze.every((c) => c.level === level)).toBe(true);
-    }
-  });
-
-  it('never returns duplicate drills within a day', () => {
-    for (const level of LEVELS) {
-      const lesson = buildDailyLesson(level, '2026-09-09');
-      for (const ids of [
-        lesson.cloze.map((c) => c.id),
-        lesson.convCards.map((c) => c.id),
-        lesson.convCloze.map((c) => c.id),
-      ]) {
-        expect(new Set(ids).size).toBe(ids.length);
-      }
-    }
-  });
-
-  it('generates vocab questions whose answer index points at the right option', () => {
-    for (const level of LEVELS) {
-      const { vocabQuiz } = buildDailyLesson(level, '2026-02-02');
-      for (const q of vocabQuiz) {
-        expect(q.answer).toBeGreaterThanOrEqual(0);
+describe('vocabulary questions', () => {
+  it('builds three answerable questions from a word entry', () => {
+    for (const word of WORDS) {
+      const questions = buildVocabQuestions(word, WORDS.filter((w) => w.level === word.level));
+      expect(questions, word.id).toHaveLength(3);
+      for (const q of questions) {
         expect(q.options).toHaveLength(4);
-        expect(new Set(q.options).size).toBe(4);
+        expect(new Set(q.options).size, `${q.id} duplicate options`).toBe(4);
+        expect(q.answer).toBeGreaterThanOrEqual(0);
+        expect(q.answer).toBeLessThan(4);
       }
     }
   });
 
-  it('pickFor returns undefined only for an empty bank', () => {
-    expect(pickFor([], '2026-01-01', 'A2', 'word')).toBeUndefined();
-    expect(pickFor(['x'], '2026-01-01', 'A2', 'word')).toBe('x');
+  it('asks the same thing every time, so retrying a step is the same step', () => {
+    const word = WORDS[0];
+    const pool = WORDS.filter((w) => w.level === word.level);
+    const a = buildVocabQuestions(word, pool);
+    const b = buildVocabQuestions(word, pool);
+    expect(a).toEqual(b);
   });
+});
 
+describe('shuffling', () => {
   it('seededShuffle is deterministic and preserves membership', () => {
     const input = ['a', 'b', 'c', 'd'];
     expect(seededShuffle(input, 's')).toEqual(seededShuffle(input, 's'));
@@ -274,16 +224,12 @@ describe('A1 level', () => {
     expect(LEVELS[0]).toBe('A1');
   });
 
-  it('has a full lesson of its own', () => {
-    const lesson = buildDailyLesson('A1', '2026-04-10');
-    expect(lesson.word.level).toBe('A1');
-    expect(lesson.article.level).toBe('A1');
-    expect(lesson.clip.level).toBe('A1');
-    expect(lesson.cloze).toHaveLength(4);
-    expect(lesson.convCards).toHaveLength(6);
-    // The two sections A1 exists for.
-    expect(lesson.phonics?.level).toBe('A1');
-    expect(lesson.grammar?.level).toBe('A1');
+  it('has a course of its own, with the two sections A1 exists for', () => {
+    const units = CURRICULUM.filter((u) => u.level === 'A1');
+    expect(units.length).toBeGreaterThanOrEqual(10);
+    const kinds = new Set(units.flatMap((u) => u.steps.map((s) => s.kind)));
+    expect(kinds).toContain('phonics');
+    expect(kinds).toContain('grammar');
   });
 
   it('teaches the alphabet, the sounds and the stress rules', () => {
@@ -326,73 +272,6 @@ describe('A1 level', () => {
       }
       expect(lesson.examples.length).toBeGreaterThanOrEqual(2);
       expect(lesson.questions.length).toBeGreaterThanOrEqual(3);
-    }
-  });
-});
-
-describe('level-scoped tasks', () => {
-  it('offers pronunciation and grammar at A1', () => {
-    const tasks = activeTasks(buildDailyLesson('A1', '2026-04-10'));
-    expect(tasks).toContain('phonics');
-    expect(tasks).toContain('grammar');
-    expect(tasks).toHaveLength(TASKS.length);
-  });
-
-  it('omits them at levels with no such lessons, so the day stays completable', () => {
-    // Asserted as a set rather than a count, so adding a level-scoped task
-    // later fails here only if it is actually offered at the wrong level.
-    const levelScoped = ['phonics', 'grammar'];
-    for (const level of ['B1', 'C2'] as const) {
-      const tasks = activeTasks(buildDailyLesson(level, '2026-04-10'));
-      for (const id of levelScoped) {
-        expect(tasks, `${level} should not offer ${id}`).not.toContain(id);
-      }
-      expect(tasks).toEqual(TASKS.map((t) => t.id).filter((id) => !levelScoped.includes(id)));
-    }
-  });
-
-  it('never reports a task whose content is missing', () => {
-    for (const level of LEVELS) {
-      const lesson = buildDailyLesson(level, '2026-07-07');
-      for (const id of activeTasks(lesson)) {
-        if (id === 'phonics') expect(lesson.phonics).toBeDefined();
-        if (id === 'grammar') expect(lesson.grammar).toBeDefined();
-      }
-    }
-  });
-});
-
-describe('rotation depth', () => {
-  /** How many distinct items a slot yields over `days` consecutive days. */
-  function distinctOver(level: (typeof LEVELS)[number], days: number, pick: (l: ReturnType<typeof buildDailyLesson>) => string) {
-    const seen = new Set<string>();
-    for (let i = 0; i < days; i++) {
-      seen.add(pick(buildDailyLesson(level, dayKey(new Date(Date.UTC(2026, 0, 5 + i))))));
-    }
-    return seen.size;
-  }
-
-  it('gives a different article and clip every day for a week', () => {
-    for (const level of LEVELS) {
-      expect(distinctOver(level, 7, (l) => l.article.id), `${level} articles in 7 days`).toBeGreaterThanOrEqual(6);
-      expect(distinctOver(level, 7, (l) => l.clip.id), `${level} clips in 7 days`).toBeGreaterThanOrEqual(6);
-    }
-  });
-
-  it('never repeats an article or a clip on consecutive days', () => {
-    for (const level of LEVELS) {
-      for (let i = 0; i < 14; i++) {
-        const one = buildDailyLesson(level, dayKey(new Date(Date.UTC(2026, 0, 5 + i))));
-        const next = buildDailyLesson(level, dayKey(new Date(Date.UTC(2026, 0, 6 + i))));
-        expect(one.article.id, `${level} article day ${i}`).not.toBe(next.article.id);
-        expect(one.clip.id, `${level} clip day ${i}`).not.toBe(next.clip.id);
-      }
-    }
-  });
-
-  it('keeps the word of the day fresh for at least a week too', () => {
-    for (const level of LEVELS) {
-      expect(distinctOver(level, 7, (l) => l.word.id), `${level} words in 7 days`).toBe(7);
     }
   });
 });
@@ -572,14 +451,11 @@ describe('vocabulary scenes', () => {
     expect(new Set(itemIds).size, 'duplicate exercise id').toBe(itemIds.length);
   });
 
-  it('is deliberately absent from the daily rotation', () => {
-    // The section is self-paced: the day's lesson must not carry a scene, and
-    // no daily task may exist for it, or it would be rationed by the calendar.
-    for (const level of LEVELS) {
-      const lesson = buildDailyLesson(level, '2026-05-20');
-      expect(lesson, `${level} lesson must not carry a scene`).not.toHaveProperty('scene');
-      expect(activeTasks(lesson)).not.toContain('lexicon');
-    }
-    expect(TASKS.map((t) => t.id)).not.toContain('lexicon');
+  it('is deliberately outside the course path', () => {
+    // The vocabulary section is self-paced. If a scene were ever made a step of
+    // a unit it would start gating the levels, which is the opposite of what it
+    // is for — and the SRS schedule would be rationed by unit order.
+    const refs = new Set(CURRICULUM.flatMap((u) => u.steps.flatMap((s) => s.refs)));
+    for (const scene of SCENES) expect(refs.has(scene.id), `${scene.id} is a course step`).toBe(false);
   });
 });

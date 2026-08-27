@@ -1256,3 +1256,224 @@ table.paradigm tbody tr:hover {
   gap: 8px;
   flex-wrap: wrap;
 }
+
+/* ─────────────────────────── the course path ─────────────────────────── */
+
+.next-step {
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1.25;
+  margin: 2px 0 2px;
+}
+
+.level-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.level-card.locked {
+  opacity: 0.62;
+}
+
+.level-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  background: none;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.level-head:disabled {
+  cursor: not-allowed;
+}
+
+.level-badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.level-card.locked .level-badge {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.level-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.level-title {
+  font-weight: 600;
+}
+
+.level-mark {
+  flex: none;
+  color: var(--muted);
+}
+
+.units {
+  border-top: 1px solid var(--border);
+  padding: 6px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.unit-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 8px;
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.unit-head:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.unit-head:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.unit-index {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.unit.complete .unit-index {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.unit-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.unit-title {
+  font-weight: 560;
+}
+
+.steps {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0 0 0 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.step-row button {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  background: none;
+  border: 0;
+  border-radius: 9px;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.step-row button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.step-row button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.step-mark {
+  flex: none;
+  width: 14px;
+  color: var(--muted);
+}
+
+.step-row.done .step-mark {
+  color: var(--accent);
+}
+
+.step-kind {
+  flex: none;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  min-width: 96px;
+}
+
+.step-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.step-verdict {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 11px;
+  background: var(--surface-2);
+}
+
+.step-verdict.pass {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.step-verdict.fail {
+  background: var(--accent-2-soft);
+  color: var(--accent-2);
+}

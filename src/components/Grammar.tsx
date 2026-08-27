@@ -1,11 +1,12 @@
 import type { GrammarLesson } from '../data/types';
 import { LEVEL_RATE } from '../data/types';
 import { useItalianSpeech } from '../lib/speech';
-import { useProgress } from '../lib/progress';
+import { useStep } from '../lib/step';
 import { Quiz } from './Quiz';
+import { StepFooter } from './StepFooter';
 
-export function Grammar({ lesson, day }: { lesson: GrammarLesson; day: string }) {
-  const { completeTask, isDone, recordQuiz } = useProgress();
+export function Grammar({ lesson, stepId, onNext }: { lesson: GrammarLesson; stepId: string; onNext?: () => void }) {
+  const step = useStep(stepId, 'grammar');
   const speech = useItalianSpeech([], LEVEL_RATE[lesson.level]);
   const canSpeak = speech.supported && speech.hasItalianVoice;
 
@@ -81,19 +82,8 @@ export function Grammar({ lesson, day }: { lesson: GrammarLesson; day: string })
         <div className="card-head">
           <span className="eyebrow">Verifica</span>
         </div>
-        <Quiz
-          questions={lesson.questions}
-          resetKey={`${lesson.id}:${day}`}
-          onComplete={(correct, total) => {
-            recordQuiz(correct, total);
-            completeTask('grammar', day);
-          }}
-        />
-        {isDone('grammar', day) && (
-          <p className="muted small" style={{ marginTop: 12 }}>
-            ✓ Grammatica di oggi completata.
-          </p>
-        )}
+        <Quiz questions={lesson.questions} resetKey={stepId} onComplete={step.report} />
+        <StepFooter done={step.done} best={step.best} attempts={step.attempts} onNext={onNext} />
       </section>
     </>
   );

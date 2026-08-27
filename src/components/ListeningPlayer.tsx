@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import type { ListeningClip } from '../data/types';
 import { LEVEL_RATE } from '../data/types';
 import { useItalianSpeech } from '../lib/speech';
-import { useProgress } from '../lib/progress';
+import { useStep } from '../lib/step';
 import { Quiz } from './Quiz';
+import { StepFooter } from './StepFooter';
 
-export function ListeningPlayer({ clip, day }: { clip: ListeningClip; day: string }) {
-  const { completeTask, isDone, recordQuiz } = useProgress();
+export function ListeningPlayer({ clip, stepId, onNext }: { clip: ListeningClip; stepId: string; onNext?: () => void }) {
+  const step = useStep(stepId, 'listening');
   const lines = clip.transcript.map((t) => t.it);
   const speech = useItalianSpeech(lines, LEVEL_RATE[clip.level]);
 
@@ -140,19 +141,8 @@ export function ListeningPlayer({ clip, day }: { clip: ListeningClip; day: strin
         <div className="card-head">
           <span className="eyebrow">Comprensione orale</span>
         </div>
-        <Quiz
-          questions={clip.questions}
-          resetKey={`${clip.id}:${day}`}
-          onComplete={(correct, total) => {
-            recordQuiz(correct, total);
-            completeTask('listening', day);
-          }}
-        />
-        {isDone('listening') && (
-          <p className="muted small" style={{ marginTop: 12 }}>
-            ✓ Ascolto di oggi completato.
-          </p>
-        )}
+        <Quiz questions={clip.questions} resetKey={stepId} onComplete={step.report} />
+        <StepFooter done={step.done} best={step.best} attempts={step.attempts} onNext={onNext} />
       </section>
     </>
   );

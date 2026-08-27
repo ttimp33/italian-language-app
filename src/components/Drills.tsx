@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import type { ClozeExercise } from '../data/types';
 import { isAnswerCorrect } from '../lib/daily';
 import { useProgress } from '../lib/progress';
+import { useStep } from '../lib/step';
 import { useItalianSpeech } from '../lib/speech';
+import { StepFooter } from './StepFooter';
 
 interface Attempt {
   value: string;
@@ -10,8 +12,17 @@ interface Attempt {
   revealed: boolean;
 }
 
-export function Drills({ exercises, day }: { exercises: ClozeExercise[]; day: string }) {
-  const { completeTask, isDone, recordDrill } = useProgress();
+export function Drills({
+  exercises,
+  stepId,
+  onNext,
+}: {
+  exercises: ClozeExercise[];
+  stepId: string;
+  onNext?: () => void;
+}) {
+  const { recordDrill } = useProgress();
+  const step = useStep(stepId, 'drills');
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [attempts, setAttempts] = useState<Record<string, Attempt>>({});
   const speech = useItalianSpeech([]);
@@ -19,7 +30,7 @@ export function Drills({ exercises, day }: { exercises: ClozeExercise[]; day: st
   useEffect(() => {
     setInputs({});
     setAttempts({});
-  }, [day, exercises.map((e) => e.id).join(',')]);
+  }, [stepId]);
 
   const check = (ex: ClozeExercise) => {
     const value = inputs[ex.id] ?? '';
@@ -38,8 +49,10 @@ export function Drills({ exercises, day }: { exercises: ClozeExercise[]; day: st
   const answeredAll = exercises.every((e) => attempts[e.id]);
   const correctCount = exercises.filter((e) => attempts[e.id]?.correct).length;
 
+  // Revealing an answer counts as a miss, so a set cannot be passed by
+  // uncovering everything — the score has to be earned before it is shown.
   useEffect(() => {
-    if (answeredAll && exercises.length > 0) completeTask('drills', day);
+    if (answeredAll && exercises.length > 0) step.report(correctCount, exercises.length);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answeredAll]);
 
@@ -129,8 +142,10 @@ export function Drills({ exercises, day }: { exercises: ClozeExercise[]; day: st
           >
             Rifai la serie
           </button>
-          {isDone('drills') && <span className="muted small">✓ Esercizi di oggi completati.</span>}
         </div>
+      )}
+      {answeredAll && (
+        <StepFooter done={step.done} best={step.best} attempts={step.attempts} onNext={onNext} />
       )}
     </section>
   );

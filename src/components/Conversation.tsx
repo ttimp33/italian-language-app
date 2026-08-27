@@ -3,55 +3,31 @@ import type { ConvCloze, ConvItem } from '../data/types';
 import { CONV_CATEGORY_EN, CONV_CATEGORY_LABEL, LEVEL_RATE } from '../data/types';
 import { blankLineIndex, isConvAnswerCorrect } from '../lib/daily';
 import { CONV_MASTERY, useProgress } from '../lib/progress';
+import { useStep } from '../lib/step';
 import { useItalianSpeech } from '../lib/speech';
-
-type Mode = 'flashcards' | 'dialoghi';
-
-export function Conversation({
-  cards,
-  drills,
-  day,
-}: {
-  cards: ConvItem[];
-  drills: ConvCloze[];
-  day: string;
-}) {
-  const [mode, setMode] = useState<Mode>('flashcards');
-
-  return (
-    <>
-      <section className="card">
-        <div className="card-head">
-          <span className="eyebrow">Conversazione · {cards[0]?.level}</span>
-          <div className="levels" style={{ padding: 3 }}>
-            <button aria-pressed={mode === 'flashcards'} onClick={() => setMode('flashcards')}>
-              Flashcard
-            </button>
-            <button aria-pressed={mode === 'dialoghi'} onClick={() => setMode('dialoghi')}>
-              Dialoghi
-            </button>
-          </div>
-        </div>
-        <p className="muted small" style={{ marginTop: 2 }}>
-          Le parole che tengono insieme il parlato: segnali discorsivi, connettivi, sostantivi e aggettivi che i
-          manuali saltano. I dizionari ne danno il significato; qui trovi la funzione.
-        </p>
-      </section>
-
-      {mode === 'flashcards' ? (
-        <Flashcards cards={cards} day={day} />
-      ) : (
-        <Dialogues drills={drills} day={day} />
-      )}
-    </>
-  );
-}
+import { StepFooter } from './StepFooter';
 
 /* ────────────────────────────── flashcards ────────────────────────────── */
 
-function Flashcards({ cards, day }: { cards: ConvItem[]; day: string }) {
-  const { progress, gradeConvCard, completeTask, isDone } = useProgress();
+/**
+ * The deck of discourse markers. A card is passed by recalling it, and a card
+ * you could not recall goes to the back of the queue rather than being dropped,
+ * so the step ends only once every card has been recalled at least once. The
+ * score reported is first-attempt recall, which is what the pass mark measures.
+ */
+export function ConvCards({
+  cards,
+  stepId,
+  onNext,
+}: {
+  cards: ConvItem[];
+  stepId: string;
+  onNext?: () => void;
+}) {
+  const { progress, gradeConvCard } = useProgress();
+  const step = useStep(stepId, 'conversation');
   const speech = useItalianSpeech([]);
+  const [firstTry, setFirstTry] = useState<Record<string, boolean>>({});
 
   // Cards graded "da rivedere" are pushed to the back of the queue rather than
   // dropped, so a session ends only once every card has been recalled at least
@@ -64,20 +40,24 @@ function Flashcards({ cards, day }: { cards: ConvItem[]; day: string }) {
     setQueue(cards.map((c) => c.id));
     setFlipped(false);
     setGraded(0);
-  }, [day, cards]);
+    setFirstTry({});
+  }, [stepId, cards]);
 
   const byId = useMemo(() => new Map(cards.map((c) => [c.id, c])), [cards]);
   const current = queue.length > 0 ? byId.get(queue[0]) : undefined;
   const finished = queue.length === 0;
 
   useEffect(() => {
-    if (finished && cards.length > 0) completeTask('conversation', day);
+    if (finished && cards.length > 0) {
+      step.report(cards.filter((c) => firstTry[c.id]).length, cards.length);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished]);
 
   const grade = (recalled: boolean) => {
     if (!current) return;
     gradeConvCard(current.id, recalled);
+    setFirstTry((prev) => (current.id in prev ? prev : { ...prev, [current.id]: recalled }));
     setGraded((n) => n + 1);
     setFlipped(false);
     setQueue((q) => (recalled ? q.slice(1) : [...q.slice(1), q[0]]));
@@ -98,12 +78,13 @@ function Flashcards({ cards, day }: { cards: ConvItem[]; day: string }) {
             onClick={() => {
               setQueue(cards.map((c) => c.id));
               setGraded(0);
+              setFirstTry({});
             }}
           >
             Rifai il mazzo
           </button>
-          {isDone('conversation', day) && <span className="muted small">✓ Conversazione di oggi completata.</span>}
         </div>
+        <StepFooter done={step.done} best={step.best} attempts={step.attempts} onNext={onNext} />
       </section>
     );
   }
@@ -198,8 +179,17 @@ function Flashcards({ cards, day }: { cards: ConvItem[]; day: string }) {
 
 /* ────────────────────────────── dialogues ────────────────────────────── */
 
-function Dialogues({ drills, day }: { drills: ConvCloze[]; day: string }) {
-  const { completeTask, isDone, recordDrill } = useProgress();
+export function ConvDialogues({
+  drills,
+  stepId,
+  onNext,
+}: {
+  drills: ConvCloze[];
+  stepId: string;
+  onNext?: () => void;
+}) {
+  const { recordDrill } = useProgress();
+  const step = useStep(stepId, 'convdrill');
   const speech = useItalianSpeech([]);
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [results, setResults] = useState<Record<string, { value: string; correct: boolean; revealed: boolean }>>({});
@@ -209,7 +199,7 @@ function Dialogues({ drills, day }: { drills: ConvCloze[]; day: string }) {
     setInputs({});
     setResults({});
     setHinted({});
-  }, [day, drills]);
+  }, [stepId, drills]);
 
   const check = (item: ConvCloze) => {
     const value = inputs[item.id] ?? '';
@@ -228,7 +218,9 @@ function Dialogues({ drills, day }: { drills: ConvCloze[]; day: string }) {
   const allAnswered = drills.every((d) => results[d.id]);
 
   useEffect(() => {
-    if (allAnswered && drills.length > 0) completeTask('conversation', day);
+    if (allAnswered && drills.length > 0) {
+      step.report(drills.filter((d) => results[d.id]?.correct).length, drills.length);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allAnswered]);
 
@@ -345,9 +337,9 @@ function Dialogues({ drills, day }: { drills: ConvCloze[]; day: string }) {
         );
       })}
 
-      {allAnswered && isDone('conversation', day) && (
+      {allAnswered && (
         <section className="card">
-          <span className="muted small">✓ Conversazione di oggi completata.</span>
+          <StepFooter done={step.done} best={step.best} attempts={step.attempts} onNext={onNext} />
         </section>
       )}
     </>
