@@ -1,15 +1,15 @@
-import type { GrammarLesson } from './types';
+import type { GrammarLesson } from '../types';
 
 /**
- * A1 grammar, ordered so each lesson only relies on the ones before it.
+ * A1 grammar. The teaching order lives in the curriculum, not here.
  *
- * A note on the last two: `farcela` and `andarsene` are pronominal verbs, and
+ * A note on `farcela` and `andarsene`: they are pronominal verbs, and
  * their full paradigms belong at B1. They are taught here as fixed chunks —
  * `ce la faccio`, `me ne vado` — because a beginner can use those immediately
  * and correctly, and will meet them on day one in real speech. The paradigm
  * comes later; the phrase is useful now.
  */
-export const GRAMMAR: GrammarLesson[] = [
+export const GRAMMAR_A1: GrammarLesson[] = [
   {
     id: 'gr-a1-pronomi-soggetto',
     level: 'A1',
@@ -1052,5 +1052,3 @@ export const GRAMMAR: GrammarLesson[] = [
     ],
   },
 ];
-
-export const grammarByLevel = (level: GrammarLesson['level']) => GRAMMAR.filter((g) => g.level === level);
